@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import structlog
 
 from app.config import get_settings
-from app.routers import auth, topics, watchlist, alerts, exports, admin, dashboard, pipeline, categories, brands, social, whitespace, platforms
+from app.routers import auth, topics, watchlist, alerts, exports, admin, dashboard, pipeline, categories, brands, social, whitespace, platforms, science, platforms
 
 settings = get_settings()
 logger = structlog.get_logger()
@@ -53,6 +53,7 @@ app.include_router(brands.router, prefix=settings.API_V1_PREFIX)
 app.include_router(social.router, prefix=settings.API_V1_PREFIX)
 app.include_router(whitespace.router, prefix=settings.API_V1_PREFIX)
 app.include_router(platforms.router, prefix=settings.API_V1_PREFIX)
+app.include_router(science.router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/health")

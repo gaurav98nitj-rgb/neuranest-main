@@ -11,6 +11,7 @@ import BrandMonitorPage from './pages/BrandMonitorPage'
 import WatchlistPage from './pages/WatchlistPage'
 import AlertsPage from './pages/AlertsPage'
 import SettingsPage from './pages/SettingsPage'
+import ScienceRadarPage from './pages/ScienceRadarPage'
 import WhiteSpacePage from './pages/WhiteSpacePage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/whitespace" element={<WhiteSpacePage />} />
+        <Route path="/science" element={<ScienceRadarPage />} />
       </Route>
 
       {/* Fallback */}

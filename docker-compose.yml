@@ -1,0 +1,110 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: neuranest-postgres
+    environment:
+      POSTGRES_DB: neuranest
+      POSTGRES_USER: neuranest
+      POSTGRES_PASSWORD: neuranest_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neuranest"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: neuranest-redis
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: neuranest-api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://neuranest:neuranest_dev@postgres:5432/neuranest
+      DATABASE_URL_SYNC: postgresql://neuranest:neuranest_dev@postgres:5432/neuranest
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: dev-secret-change-in-production
+      ENVIRONMENT: development
+      META_APP_ID: ""
+      META_APP_SECRET: ""
+      META_ACCESS_TOKEN: ""
+      TIKTOK_API_KEY: ""
+      TIKTOK_API_SECRET: ""
+    volumes:
+      - ./api:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: neuranest-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:8000
+    command: npm run dev -- --host 0.0.0.0 --port 3000
+
+  celery-worker:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: neuranest-celery
+    environment:
+      DATABASE_URL: postgresql+asyncpg://neuranest:neuranest_dev@postgres:5432/neuranest
+      DATABASE_URL_SYNC: postgresql://neuranest:neuranest_dev@postgres:5432/neuranest
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: dev-secret-change-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.tasks.celery_app worker --loglevel=info
+
+
+  celery-beat:
+    build: ./api
+    container_name: neuranest-celery-beat
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+    environment:
+      DATABASE_URL: postgresql+asyncpg://neuranest:neuranest_dev@postgres:5432/neuranest
+      DATABASE_URL_SYNC: postgresql://neuranest:neuranest_dev@postgres:5432/neuranest
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: dev-secret-change-in-production
+    volumes:
+      - ./api:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:

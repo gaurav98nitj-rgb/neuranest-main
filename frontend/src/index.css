@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #0E2F44;
+  color: #D6EAF8;
+}
+
+.card {
+  background: #133B55;
+  border: 1px solid #1E5570;
+  border-radius: 0.75rem;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+select,
+textarea {
+  background: #0E2F44 !important;
+  border: 1px solid #1E5570 !important;
+  color: #D6EAF8 !important;
+  border-radius: 0.5rem;
+}
+input::placeholder, textarea::placeholder { color: rgba(93,173,226,0.4) !important; }
+input:focus, select:focus, textarea:focus {
+  border-color: #2E86C1 !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(46, 134, 193, 0.25);
+}
+select option { background: #133B55; color: #D6EAF8; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0E2F44; }
+::-webkit-scrollbar-thumb { background: #1E5570; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2E86C1; }
+
+table { border-collapse: collapse; }

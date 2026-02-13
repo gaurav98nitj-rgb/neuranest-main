@@ -41,6 +41,7 @@ celery_app.conf.update(
         "app.tasks.discovery",
         "app.tasks.category_metrics",
         "app.tasks.nlp_pipeline",
+        "app.tasks.meta_tiktok_ingestion",
     ],
 )
 

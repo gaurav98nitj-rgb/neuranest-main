@@ -20,8 +20,6 @@ async def trigger_pipeline_task(
     from app.tasks.scoring_task import compute_all_scores
     from app.tasks.forecasting import generate_forecasts
     from app.tasks.alerts_eval import evaluate_alerts
-    from app.tasks.nlp_pipeline import run_social_listening_nlp_daily
-    from app.tasks.category_metrics import compute_category_metrics_daily
 
     task_map = {
         "google_trends": ingest_google_trends,
@@ -30,8 +28,6 @@ async def trigger_pipeline_task(
         "scoring": compute_all_scores,
         "forecasting": generate_forecasts,
         "alerts": evaluate_alerts,
-        "nlp_pipeline": run_social_listening_nlp_daily,
-        "category_metrics": compute_category_metrics_daily,
     }
 
     task_fn = task_map.get(task_name)
@@ -58,7 +54,6 @@ async def run_full_pipeline(
     from app.tasks.ingestion import ingest_google_trends, ingest_reddit_mentions
     from app.tasks.features import generate_features
     from app.tasks.scoring_task import compute_all_scores
-    from app.tasks.nlp_pipeline import run_social_listening_nlp_daily
 
     # Chain tasks to run in sequence
     pipeline = chain(
@@ -66,7 +61,6 @@ async def run_full_pipeline(
         ingest_reddit_mentions.s(),
         generate_features.s(),
         compute_all_scores.s(),
-        run_social_listening_nlp_daily.s(),
     )
     result = pipeline.apply_async()
 
@@ -74,5 +68,5 @@ async def run_full_pipeline(
         "message": "Full pipeline queued",
         "chain_id": result.id,
         "status": "queued",
-        "sequence": ["google_trends", "reddit", "features", "scoring", "nlp_pipeline"],
+        "sequence": ["google_trends", "reddit", "features", "scoring"],
     }

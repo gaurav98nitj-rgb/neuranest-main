@@ -11,6 +11,7 @@ import BrandMonitorPage from './pages/BrandMonitorPage'
 import WatchlistPage from './pages/WatchlistPage'
 import AlertsPage from './pages/AlertsPage'
 import SettingsPage from './pages/SettingsPage'
+import WhiteSpacePage from './pages/WhiteSpacePage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/watchlist" element={<WatchlistPage />} />
         <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/whitespace" element={<WhiteSpacePage />} />
       </Route>
 
       {/* Fallback */}

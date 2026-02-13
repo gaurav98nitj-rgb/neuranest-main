@@ -95,3 +95,8 @@ export const socialApi = {
   topicFeatureRequests: (id: string, params?: Record<string, any>) =>
     api.get(`/social/topics/${id}/feature-requests`, { params }),
 }
+
+export const whitespaceApi = {
+  heatmap: (params?: Record<string, any>) => api.get('/whitespace', { params }),
+  cell: (params: Record<string, any>) => api.get('/whitespace/cell', { params }),
+}

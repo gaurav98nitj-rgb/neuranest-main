@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../lib/store'
-import { Eye, Bell, Search, LogOut, BarChart3, LayoutDashboard, Grid3X3, Settings, Building2 } from 'lucide-react'
+import { Eye, Bell, Search, LogOut, BarChart3, LayoutDashboard, Grid3X3, Settings, Building2, Map } from 'lucide-react'
 import clsx from 'clsx'
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { to: '/explore',    label: 'Explorer',     icon: Search },
   { to: '/categories', label: 'Categories',   icon: Grid3X3 },
   { to: '/brands',     label: 'Brands',       icon: Building2 },
+  { to: '/whitespace', label: 'White Space',  icon: Map },
   { to: '/watchlist',  label: 'Watchlist',    icon: Eye },
   { to: '/alerts',     label: 'Alerts',       icon: Bell },
 ]

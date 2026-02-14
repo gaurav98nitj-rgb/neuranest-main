@@ -2,17 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background: #0E2F44;
-  color: #D6EAF8;
+@layer base {
+  body {
+    @apply bg-sand-100 text-sand-900 antialiased;
+    font-family: 'Plus Jakarta Sans', 'Helvetica Neue', 'Arial', sans-serif;
+  }
+  h1, h2, h3 {
+    font-family: 'Newsreader', 'Georgia', 'Times New Roman', serif;
+    letter-spacing: -0.02em;
+  }
 }
 
-.card {
-  background: #133B55;
-  border: 1px solid #1E5570;
-  border-radius: 0.75rem;
+@layer components {
+  .card {
+    @apply bg-white rounded-xl border border-sand-300 shadow-sm;
+  }
+  .card:hover {
+    @apply border-sand-400;
+    box-shadow: 0 4px 12px rgba(42, 37, 32, 0.08);
+  }
+  .badge-emerging {
+    @apply bg-sage-50 text-sage-400 text-xs font-medium px-2.5 py-0.5 rounded-full;
+  }
+  .badge-exploding {
+    @apply bg-coral-100 text-coral-500 text-xs font-medium px-2.5 py-0.5 rounded-full;
+  }
+  .badge-peaking {
+    @apply bg-amber-50 text-amber-300 text-xs font-medium px-2.5 py-0.5 rounded-full;
+  }
+  .badge-declining {
+    @apply bg-rose-50 text-rose-400 text-xs font-medium px-2.5 py-0.5 rounded-full;
+  }
 }
 
+/* Form elements */
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -20,22 +43,29 @@ input[type="number"],
 input[type="search"],
 select,
 textarea {
-  background: #0E2F44 !important;
-  border: 1px solid #1E5570 !important;
-  color: #D6EAF8 !important;
-  border-radius: 0.5rem;
+  background: #FFFFFF !important;
+  border: 1.5px solid #E6E1DA !important;
+  color: #2A2520 !important;
+  border-radius: 0.625rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
-input::placeholder, textarea::placeholder { color: rgba(93,173,226,0.4) !important; }
+input::placeholder, textarea::placeholder {
+  color: #B8B2A8 !important;
+}
 input:focus, select:focus, textarea:focus {
-  border-color: #2E86C1 !important;
+  border-color: #E8714A !important;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(46, 134, 193, 0.25);
+  box-shadow: 0 0 0 3px rgba(232, 113, 74, 0.1);
 }
-select option { background: #133B55; color: #D6EAF8; }
+select option {
+  background: #FFFFFF;
+  color: #2A2520;
+}
 
+/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0E2F44; }
-::-webkit-scrollbar-thumb { background: #1E5570; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #2E86C1; }
+::-webkit-scrollbar-track { background: #F9F7F4; }
+::-webkit-scrollbar-thumb { background: #D4CEC5; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #B8B2A8; }
 
 table { border-collapse: collapse; }

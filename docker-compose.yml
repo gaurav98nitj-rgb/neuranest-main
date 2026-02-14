@@ -44,6 +44,7 @@ services:
       META_ACCESS_TOKEN: ""
       TIKTOK_API_KEY: ""
       TIKTOK_API_SECRET: ""
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
     volumes:
       - ./api:/app
       - ~/Desktop/Amazon Search term Data Two years:/data/amazon-ba:ro

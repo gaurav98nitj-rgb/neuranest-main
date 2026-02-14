@@ -13,6 +13,7 @@ import AlertsPage from './pages/AlertsPage'
 import SettingsPage from './pages/SettingsPage'
 import ScienceRadarPage from './pages/ScienceRadarPage'
 import AmazonBAPage from './pages/AmazonBAPage'
+import ProductIntelligencePage from './pages/ProductIntelligencePage'
 import WhiteSpacePage from './pages/WhiteSpacePage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/whitespace" element={<WhiteSpacePage />} />
         <Route path="/science" element={<ScienceRadarPage />} />
         <Route path="/amazon-ba" element={<AmazonBAPage />} />
+        <Route path="/product-intelligence" element={<ProductIntelligencePage />} />
       </Route>
 
       {/* Fallback */}

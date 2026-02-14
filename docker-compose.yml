@@ -1,5 +1,4 @@
 version: "3.9"
-
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -17,7 +16,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
   redis:
     image: redis:7-alpine
     container_name: neuranest-redis
@@ -28,7 +26,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
-
   api:
     build:
       context: ./api
@@ -49,13 +46,13 @@ services:
       TIKTOK_API_SECRET: ""
     volumes:
       - ./api:/app
+      - ~/Desktop/Amazon Search term Data Two years:/data/amazon-ba:ro
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
   frontend:
     build:
       context: ./frontend
@@ -69,7 +66,6 @@ services:
     environment:
       VITE_API_URL: http://localhost:8000
     command: npm run dev -- --host 0.0.0.0 --port 3000
-
   celery-worker:
     build:
       context: ./api
@@ -80,14 +76,15 @@ services:
       DATABASE_URL_SYNC: postgresql://neuranest:neuranest_dev@postgres:5432/neuranest
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: dev-secret-change-in-production
+    volumes:
+      - ./api:/app
+      - ~/Desktop/Amazon Search term Data Two years:/data/amazon-ba:ro
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     command: celery -A app.tasks.celery_app worker --loglevel=info
-
-
   celery-beat:
     build: ./api
     container_name: neuranest-celery-beat
@@ -105,6 +102,5 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
-
 volumes:
   pgdata:

@@ -10,6 +10,7 @@ const navItems = [
   { to: '/brands',     label: 'Brands',       icon: Building2 },
   { to: '/whitespace', label: 'White Space',  icon: Map },
   { to: '/science', label: 'Science Radar', icon: Microscope },
+  { to: '/amazon-ba', label: 'Amazon BA', icon: BarChart3 },
   { to: '/watchlist',  label: 'Watchlist',    icon: Eye },
   { to: '/alerts',     label: 'Alerts',       icon: Bell },
 ]

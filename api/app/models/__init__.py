@@ -31,6 +31,7 @@ from app.models.platforms import (
 
 # Science Radar (NEW)
 from app.models.science import ScienceItem, ScienceCluster, ScienceClusterItem, ScienceOpportunityCard
+from app.models.amazon_ba import AmazonBrandAnalytics, AmazonBAImportJob
 
 # Signal Fusion (NEW)
 from app.models.signals import SignalFusionDaily

@@ -43,6 +43,10 @@ celery_app.conf.update(
         "app.tasks.nlp_pipeline",
         "app.tasks.meta_tiktok_ingestion",
         "app.tasks.science_radar",
+        "app.tasks.amazon_ba_import",
+        "app.tasks.google_trends_backfill",
+        "app.tasks.reddit_backfill",
+        "app.tasks.entity_resolution",
     ],
 )
 

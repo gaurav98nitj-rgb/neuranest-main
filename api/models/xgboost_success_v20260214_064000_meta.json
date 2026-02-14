@@ -1,0 +1,324 @@
+{
+  "metrics": {
+    "train": {
+      "split": "train",
+      "samples": 4751,
+      "accuracy": 0.9631656493369817,
+      "precision": 0.7776365946632783,
+      "recall": 1.0,
+      "f1": 0.8749106504646176,
+      "roc_auc": 0.9995487685289144,
+      "avg_precision": 0.9968550395135514,
+      "positive_rate": 0.12881498631866975,
+      "predicted_positive_rate": 0.16564933698168807,
+      "confusion_matrix": [
+        [
+          3964,
+          175
+        ],
+        [
+          0,
+          612
+        ]
+      ],
+      "classification_report": "              precision    recall  f1-score   support\n\n     Failure       1.00      0.96      0.98      4139\n     Success       0.78      1.00      0.87       612\n\n    accuracy                           0.96      4751\n   macro avg       0.89      0.98      0.93      4751\nweighted avg       0.97      0.96      0.97      4751\n"
+    },
+    "validate": {
+      "split": "validate",
+      "samples": 839,
+      "accuracy": 0.8903456495828367,
+      "precision": 0.5573770491803278,
+      "recall": 0.6415094339622641,
+      "f1": 0.5964912280701754,
+      "roc_auc": 0.8749131251769673,
+      "avg_precision": 0.5362359805860669,
+      "positive_rate": 0.1263408820023838,
+      "predicted_positive_rate": 0.14541120381406436,
+      "confusion_matrix": [
+        [
+          679,
+          54
+        ],
+        [
+          38,
+          68
+        ]
+      ],
+      "classification_report": "              precision    recall  f1-score   support\n\n     Failure       0.95      0.93      0.94       733\n     Success       0.56      0.64      0.60       106\n\n    accuracy                           0.89       839\n   macro avg       0.75      0.78      0.77       839\nweighted avg       0.90      0.89      0.89       839\n"
+    },
+    "test": {
+      "split": "test",
+      "samples": 1709,
+      "accuracy": 0.8566413107080164,
+      "precision": 0.42857142857142855,
+      "recall": 0.4669811320754717,
+      "f1": 0.4469525959367946,
+      "roc_auc": 0.8526329388336421,
+      "avg_precision": 0.40465152571660773,
+      "positive_rate": 0.1240491515506144,
+      "predicted_positive_rate": 0.13516676418958457,
+      "confusion_matrix": [
+        [
+          1365,
+          132
+        ],
+        [
+          113,
+          99
+        ]
+      ],
+      "classification_report": "              precision    recall  f1-score   support\n\n     Failure       0.92      0.91      0.92      1497\n     Success       0.43      0.47      0.45       212\n\n    accuracy                           0.86      1709\n   macro avg       0.68      0.69      0.68      1709\nweighted avg       0.86      0.86      0.86      1709\n"
+    }
+  },
+  "best_params": {
+    "n_estimators": 600,
+    "max_depth": 9,
+    "learning_rate": 0.014214229214122442,
+    "min_child_weight": 7,
+    "subsample": 0.9781975312213596,
+    "colsample_bytree": 0.8906509886774797,
+    "reg_alpha": 5.858869553029153e-08,
+    "reg_lambda": 0.12134860409750635,
+    "gamma": 1.0088403910948043
+  },
+  "scale_pos_weight": 6.7630718954248366,
+  "training_samples": 4751,
+  "validation_samples": 839,
+  "test_samples": 1709,
+  "feature_count": 102,
+  "feature_names": [
+    "rank_current",
+    "rank_median",
+    "rank_best_in_month",
+    "rank_1m_ago",
+    "rank_change_1m",
+    "rank_pct_change_1m",
+    "rank_3m_ago",
+    "rank_change_3m",
+    "rank_pct_change_3m",
+    "rank_6m_ago",
+    "rank_change_6m",
+    "rank_pct_change_6m",
+    "rank_12m_ago",
+    "rank_change_12m",
+    "rank_pct_change_12m",
+    "rank_acceleration",
+    "rank_volatility_3m",
+    "rank_volatility_6m",
+    "rank_slope_3m",
+    "rank_slope_6m",
+    "rank_best_6m",
+    "rank_worst_6m",
+    "rank_range_6m",
+    "click_share_total",
+    "click_share_top1",
+    "click_share_velocity_1m",
+    "click_share_velocity_3m",
+    "conv_share_total",
+    "conv_share_top1",
+    "conv_share_velocity_1m",
+    "conv_share_velocity_3m",
+    "click_conv_gap",
+    "click_conv_gap_velocity_1m",
+    "brand_hhi",
+    "brand_hhi_change_3m",
+    "brand_count_unique",
+    "brand_stability_3m",
+    "search_term_count",
+    "gt_interest_avg",
+    "gt_interest_max",
+    "gt_interest_min",
+    "gt_interest_std",
+    "gt_interest_change_1m",
+    "gt_interest_pct_change_1m",
+    "gt_interest_change_3m",
+    "gt_interest_pct_change_3m",
+    "gt_interest_change_6m",
+    "gt_interest_pct_change_6m",
+    "gt_interest_change_12m",
+    "gt_interest_slope_3m",
+    "gt_interest_slope_6m",
+    "gt_interest_acceleration",
+    "gt_interest_volatility_3m",
+    "gt_spike_flag",
+    "gt_momentum_3m",
+    "gt_breakout_score",
+    "reddit_post_count",
+    "reddit_total_score",
+    "reddit_avg_score",
+    "reddit_total_comments",
+    "reddit_avg_comments",
+    "reddit_avg_sentiment",
+    "reddit_sentiment_change_1m",
+    "reddit_sentiment_change_3m",
+    "reddit_velocity_1m",
+    "reddit_velocity_3m",
+    "reddit_engagement_rate",
+    "reddit_score_velocity_1m",
+    "reddit_buzz_score",
+    "tiktok_total_views",
+    "tiktok_total_videos",
+    "tiktok_avg_views",
+    "tiktok_view_velocity_1m",
+    "tiktok_view_velocity_3m",
+    "tiktok_virality_score",
+    "ig_post_count",
+    "ig_avg_likes",
+    "ig_avg_comments",
+    "ig_avg_sentiment",
+    "ig_engagement_rate",
+    "ig_velocity_1m",
+    "social_cross_platform_score",
+    "science_paper_count",
+    "science_paper_count_cum",
+    "science_avg_citations",
+    "science_paper_velocity_1m",
+    "science_paper_velocity_3m",
+    "science_momentum",
+    "season_month",
+    "season_quarter",
+    "season_is_q4",
+    "season_yoy_rank_change",
+    "season_rank_vs_12m_avg",
+    "season_detrended_rank",
+    "convergence_amazon_active",
+    "convergence_gt_active",
+    "convergence_reddit_active",
+    "convergence_social_active",
+    "convergence_science_active",
+    "convergence_active_layers",
+    "convergence_score",
+    "convergence_agreement_ratio"
+  ],
+  "positive_rate": 0.12881498631866975,
+  "top_20_features": [
+    {
+      "feature": "rank_current",
+      "mean_abs_shap": 1.458898901939392,
+      "signal_group": "Amazon Demand"
+    },
+    {
+      "feature": "rank_best_6m",
+      "mean_abs_shap": 0.5739263296127319,
+      "signal_group": "Amazon Demand"
+    },
+    {
+      "feature": "rank_best_in_month",
+      "mean_abs_shap": 0.4426600933074951,
+      "signal_group": "Amazon Demand"
+    },
+    {
+      "feature": "click_conv_gap",
+      "mean_abs_shap": 0.1549006849527359,
+      "signal_group": "Click Dynamics"
+    },
+    {
+      "feature": "conv_share_total",
+      "mean_abs_shap": 0.14256063103675842,
+      "signal_group": "Click Dynamics"
+    },
+    {
+      "feature": "search_term_count",
+      "mean_abs_shap": 0.14092065393924713,
+      "signal_group": "Brand Competition"
+    },
+    {
+      "feature": "conv_share_top1",
+      "mean_abs_shap": 0.14019092917442322,
+      "signal_group": "Click Dynamics"
+    },
+    {
+      "feature": "click_share_total",
+      "mean_abs_shap": 0.11068643629550934,
+      "signal_group": "Click Dynamics"
+    },
+    {
+      "feature": "brand_count_unique",
+      "mean_abs_shap": 0.1083647683262825,
+      "signal_group": "Brand Competition"
+    },
+    {
+      "feature": "brand_hhi",
+      "mean_abs_shap": 0.10772725939750671,
+      "signal_group": "Brand Competition"
+    },
+    {
+      "feature": "rank_worst_6m",
+      "mean_abs_shap": 0.09975025057792664,
+      "signal_group": "Amazon Demand"
+    },
+    {
+      "feature": "click_share_top1",
+      "mean_abs_shap": 0.09907805919647217,
+      "signal_group": "Click Dynamics"
+    },
+    {
+      "feature": "season_rank_vs_12m_avg",
+      "mean_abs_shap": 0.09625180065631866,
+      "signal_group": "Seasonality"
+    },
+    {
+      "feature": "rank_slope_6m",
+      "mean_abs_shap": 0.09081202745437622,
+      "signal_group": "Amazon Demand"
+    },
+    {
+      "feature": "rank_1m_ago",
+      "mean_abs_shap": 0.08493490517139435,
+      "signal_group": "Amazon Demand"
+    },
+    {
+      "feature": "conv_share_velocity_1m",
+      "mean_abs_shap": 0.08017828315496445,
+      "signal_group": "Click Dynamics"
+    },
+    {
+      "feature": "click_share_velocity_1m",
+      "mean_abs_shap": 0.07727651298046112,
+      "signal_group": "Click Dynamics"
+    },
+    {
+      "feature": "click_conv_gap_velocity_1m",
+      "mean_abs_shap": 0.07689764350652695,
+      "signal_group": "Click Dynamics"
+    },
+    {
+      "feature": "rank_slope_3m",
+      "mean_abs_shap": 0.07237474620342255,
+      "signal_group": "Amazon Demand"
+    },
+    {
+      "feature": "season_month",
+      "mean_abs_shap": 0.06940389424562454,
+      "signal_group": "Seasonality"
+    }
+  ],
+  "udsi_v2_weights": {
+    "Amazon Demand": 0.662285566329956,
+    "Click Dynamics": 0.19430075585842133,
+    "Brand Competition": 0.0856863334774971,
+    "Seasonality": 0.04187982901930809,
+    "Google Search": 0.00872013159096241,
+    "Social (Reddit)": 0.004972971975803375,
+    "Convergence": 0.0021543623879551888,
+    "Science Signal": 0.0,
+    "Social (Cross-Platform)": 0.0,
+    "Social (Instagram)": 0.0,
+    "Social (TikTok)": 0.0
+  },
+  "group_importance": {
+    "Amazon Demand": 3.2898850440979004,
+    "Click Dynamics": 0.9651836156845093,
+    "Brand Competition": 0.42564448714256287,
+    "Seasonality": 0.2080368846654892,
+    "Google Search": 0.04331700876355171,
+    "Social (Reddit)": 0.024703098461031914,
+    "Convergence": 0.010701735503971577,
+    "Science Signal": 0.0,
+    "Social (Cross-Platform)": 0.0,
+    "Social (Instagram)": 0.0,
+    "Social (TikTok)": 0.0
+  },
+  "optuna_best_value": 0.5964912280701754,
+  "country": "US"
+}

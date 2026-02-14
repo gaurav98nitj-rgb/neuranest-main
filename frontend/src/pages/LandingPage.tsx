@@ -7,7 +7,6 @@ import {
   CheckCircle2, Star, ArrowUpRight
 } from 'lucide-react'
 
-// ─── Animated counter hook ───
 function useCounter(end: number, duration = 2000) {
   const [count, setCount] = useState(0)
   useEffect(() => {
@@ -23,8 +22,6 @@ function useCounter(end: number, duration = 2000) {
   return count
 }
 
-// ─── Sample trend data for hero chart ───
-const SAMPLE_SPARKLINE = [12, 15, 14, 18, 22, 25, 28, 35, 42, 55, 68, 78, 85, 91]
 const SAMPLE_TRENDS = [
   { name: 'Portable Blender Pro', stage: 'exploding', score: 87, growth: '+245%', category: 'Kitchen' },
   { name: 'Smart Garden Kit', stage: 'exploding', score: 82, growth: '+189%', category: 'Home' },
@@ -34,52 +31,22 @@ const SAMPLE_TRENDS = [
 ]
 
 const FEATURES = [
-  {
-    icon: TrendingUp,
-    title: 'Multi-Source Trend Detection',
-    description: 'Aggregate signals from Google Trends, Reddit, and Amazon to identify product opportunities before they peak.',
-    color: '#2E86C1',
-  },
-  {
-    icon: Zap,
-    title: 'Exploding Topic Alerts',
-    description: 'Get notified when a product niche hits escape velocity. Our ML models detect acceleration patterns in real-time.',
-    color: '#E67E22',
-  },
-  {
-    icon: BarChart3,
-    title: 'Prophet Demand Forecasting',
-    description: '3-6 month demand forecasts with confidence intervals. Know where a trend is heading before committing inventory.',
-    color: '#27AE60',
-  },
-  {
-    icon: Shield,
-    title: 'Competition Intelligence',
-    description: 'Amazon ASIN analysis, brand concentration, pricing gaps, and review sentiment — all in one view.',
-    color: '#8E44AD',
-  },
-  {
-    icon: Target,
-    title: '7-Factor Opportunity Score',
-    description: 'Weighted scoring across demand growth, acceleration, competition, cross-source confirmation, and more.',
-    color: '#E74C3C',
-  },
-  {
-    icon: Sparkles,
-    title: 'Gen-Next Product Specs',
-    description: 'AI-generated product improvement roadmaps: must-fix issues, must-add features, and market positioning.',
-    color: '#F39C12',
-  },
+  { icon: TrendingUp, title: 'Multi-Source Trend Detection', description: 'Aggregate signals from Google Trends, Reddit, and Amazon to identify product opportunities before they peak.', color: '#E8714A' },
+  { icon: Zap, title: 'Exploding Topic Alerts', description: 'Get notified when a product niche hits escape velocity. Our ML models detect acceleration patterns in real-time.', color: '#D4930D' },
+  { icon: BarChart3, title: 'Prophet Demand Forecasting', description: '3-6 month demand forecasts with confidence intervals. Know where a trend is heading before committing inventory.', color: '#1A8754' },
+  { icon: Shield, title: 'Competition Intelligence', description: 'Amazon ASIN analysis, brand concentration, pricing gaps, and review sentiment — all in one view.', color: '#7C3AED' },
+  { icon: Target, title: '7-Factor Opportunity Score', description: 'Weighted scoring across demand growth, acceleration, competition, cross-source confirmation, and more.', color: '#C0392B' },
+  { icon: Sparkles, title: 'Gen-Next Product Specs', description: 'AI-generated product improvement roadmaps: must-fix issues, must-add features, and market positioning.', color: '#2D3E50' },
 ]
 
 const stageBadge = (stage: string) => {
   const styles: Record<string, string> = {
-    exploding: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-    emerging: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    peaking: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
-    declining: 'bg-red-500/20 text-red-300 border-red-500/30',
+    exploding: 'bg-coral-100 text-coral-500 border-coral-200',
+    emerging: 'bg-sage-50 text-sage-400 border-sage-200',
+    peaking: 'bg-amber-50 text-amber-300 border-amber-100',
+    declining: 'bg-rose-50 text-rose-400 border-rose-100',
   }
-  return styles[stage] || 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+  return styles[stage] || 'bg-sand-200 text-sand-600 border-sand-300'
 }
 
 export default function LandingPage() {
@@ -90,44 +57,37 @@ export default function LandingPage() {
   const sources = useCounter(5)
 
   return (
-    <div className="min-h-screen bg-brand-900 text-white overflow-hidden">
-      {/* ─── Subtle grid background ─── */}
+    <div className="min-h-screen bg-sand-50 text-sand-900 overflow-hidden">
+      {/* Subtle warm grid */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(46,134,193,0.08) 1px, transparent 0)`,
+          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(232,113,74,0.06) 1px, transparent 0)`,
           backgroundSize: '48px 48px',
         }} />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-brand-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full blur-[120px]" style={{ background: 'rgba(232,113,74,0.06)' }} />
       </div>
 
       <div className="relative z-10">
-        {/* ─── NAV ─── */}
+        {/* NAV */}
         <nav className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-white" />
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: '#E8714A' }}>
+              <BarChart3 className="h-5 w-5 text-white" />
             </div>
-            <span style={{ fontFamily: "'Instrument Sans', 'DM Sans', sans-serif", fontWeight: 700, fontSize: '1.25rem', letterSpacing: '-0.02em' }}>
+            <span style={{ fontFamily: "'Newsreader', Georgia, serif", fontWeight: 500, fontSize: '1.25rem', letterSpacing: '-0.02em', color: '#1A2A3A' }}>
               NeuraNest
             </span>
           </div>
           <div className="flex items-center gap-4">
             {isAuth ? (
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="px-5 py-2.5 bg-brand-500 hover:bg-brand-400 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-brand-500/25"
-              >
+              <button onClick={() => navigate('/dashboard')}
+                className="px-5 py-2.5 bg-coral-400 hover:bg-coral-500 text-white rounded-lg text-sm font-semibold transition-all duration-200">
                 Go to Dashboard <ArrowRight className="inline h-4 w-4 ml-1" />
               </button>
             ) : (
               <>
-                <Link to="/auth/login" className="text-sm text-brand-200 hover:text-white transition-colors font-medium">
-                  Log in
-                </Link>
-                <Link
-                  to="/auth/signup"
-                  className="px-5 py-2.5 bg-brand-500 hover:bg-brand-400 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-lg hover:shadow-brand-500/25"
-                >
+                <Link to="/auth/login" className="text-sm text-sand-600 hover:text-charcoal-700 transition-colors font-medium">Log in</Link>
+                <Link to="/auth/signup" className="px-5 py-2.5 bg-coral-400 hover:bg-coral-500 text-white rounded-lg text-sm font-semibold transition-all duration-200">
                   Start Free <ArrowRight className="inline h-4 w-4 ml-1" />
                 </Link>
               </>
@@ -135,124 +95,87 @@ export default function LandingPage() {
           </div>
         </nav>
 
-        {/* ─── HERO ─── */}
+        {/* HERO */}
         <section className="px-8 pt-16 pb-24 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Left: Copy */}
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/15 border border-brand-500/25 text-brand-300 text-xs font-medium mb-6"
-                   style={{ animationDelay: '0.1s' }}>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-coral-50 border border-coral-200 text-coral-500 text-xs font-medium mb-6">
                 <Zap className="h-3.5 w-3.5" />
                 Tracking 194 product niches across 5 data sources
               </div>
 
-              <h1 className="text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight mb-6"
-                  style={{ fontFamily: "'Instrument Sans', 'DM Sans', sans-serif" }}>
-                Spot exploding
-                <br />
-                product trends
-                <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 to-brand-500">
-                  months early.
-                </span>
+              <h1 className="text-5xl lg:text-6xl leading-[1.08] tracking-tight mb-6"
+                  style={{ fontFamily: "'Newsreader', Georgia, serif", fontWeight: 400, color: '#1A2A3A' }}>
+                Spot exploding<br />product trends<br />
+                <span style={{ color: '#E8714A' }}>months early.</span>
               </h1>
 
-              <p className="text-lg text-brand-200/80 leading-relaxed mb-8 max-w-lg">
-                NeuraNest ingests signals from Google Trends, Reddit, and Amazon — then
-                scores, forecasts, and ranks product opportunities so you can move before
-                the market catches on.
+              <p className="text-lg text-sand-600 leading-relaxed mb-8 max-w-lg">
+                NeuraNest ingests signals from Google Trends, Reddit, and Amazon — then scores, forecasts, and ranks product opportunities so you can move before the market catches on.
               </p>
 
               <div className="flex items-center gap-4 mb-10">
-                <Link
-                  to={isAuth ? '/dashboard' : '/auth/signup'}
-                  className="group px-7 py-3.5 bg-brand-500 hover:bg-brand-400 text-white rounded-xl text-sm font-bold transition-all duration-200 hover:shadow-xl hover:shadow-brand-500/30 flex items-center gap-2"
-                >
+                <Link to={isAuth ? '/dashboard' : '/auth/signup'}
+                  className="group px-7 py-3.5 bg-coral-400 hover:bg-coral-500 text-white rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2">
                   {isAuth ? 'Open Dashboard' : 'Get Started Free'}
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
-                <Link
-                  to={isAuth ? '/explore' : '/auth/login'}
-                  className="px-7 py-3.5 border border-brand-500/30 hover:border-brand-500/60 text-brand-200 hover:text-white rounded-xl text-sm font-semibold transition-all duration-200"
-                >
+                <Link to={isAuth ? '/explore' : '/auth/login'}
+                  className="px-7 py-3.5 border border-sand-300 hover:border-coral-300 text-sand-700 hover:text-coral-500 rounded-xl text-sm font-semibold transition-all duration-200">
                   Explore Trends
                 </Link>
               </div>
 
-              {/* Live stats */}
               <div className="flex items-center gap-8">
                 <div>
-                  <p className="text-2xl font-bold text-white tabular-nums">{topicsCount.toLocaleString()}</p>
-                  <p className="text-xs text-brand-300/60 uppercase tracking-wider mt-0.5">Topics Tracked</p>
+                  <p className="text-2xl font-bold text-charcoal-800 tabular-nums">{topicsCount.toLocaleString()}</p>
+                  <p className="text-xs text-sand-500 uppercase tracking-wider mt-0.5">Topics Tracked</p>
                 </div>
-                <div className="w-px h-8 bg-brand-700" />
+                <div className="w-px h-8 bg-sand-300" />
                 <div>
-                  <p className="text-2xl font-bold text-white tabular-nums">{dataPoints.toLocaleString()}+</p>
-                  <p className="text-xs text-brand-300/60 uppercase tracking-wider mt-0.5">Data Points</p>
+                  <p className="text-2xl font-bold text-charcoal-800 tabular-nums">{dataPoints.toLocaleString()}+</p>
+                  <p className="text-xs text-sand-500 uppercase tracking-wider mt-0.5">Data Points</p>
                 </div>
-                <div className="w-px h-8 bg-brand-700" />
+                <div className="w-px h-8 bg-sand-300" />
                 <div>
-                  <p className="text-2xl font-bold text-white tabular-nums">{sources}</p>
-                  <p className="text-xs text-brand-300/60 uppercase tracking-wider mt-0.5">Data Sources</p>
+                  <p className="text-2xl font-bold text-charcoal-800 tabular-nums">{sources}</p>
+                  <p className="text-xs text-sand-500 uppercase tracking-wider mt-0.5">Data Sources</p>
                 </div>
               </div>
             </div>
 
-            {/* Right: Preview card */}
+            {/* Preview card */}
             <div className="relative">
-              {/* Glow behind card */}
-              <div className="absolute -inset-4 bg-brand-500/10 rounded-3xl blur-2xl" />
-
-              <div className="relative bg-brand-800/60 backdrop-blur-sm border border-brand-700/50 rounded-2xl p-6 shadow-2xl">
+              <div className="absolute -inset-4 rounded-3xl blur-2xl" style={{ background: 'rgba(232,113,74,0.08)' }} />
+              <div className="relative bg-white border border-sand-300 rounded-2xl p-6 shadow-lg">
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-sm font-semibold text-brand-200">Top Trending Products</h3>
-                  <span className="text-[10px] text-brand-400 bg-brand-500/10 px-2 py-1 rounded-full">Live</span>
+                  <h3 className="text-sm font-semibold text-charcoal-700">Top Trending Products</h3>
+                  <span className="text-[10px] text-coral-500 bg-coral-50 px-2 py-1 rounded-full">Live</span>
                 </div>
-
                 <div className="space-y-3">
                   {SAMPLE_TRENDS.map((trend, i) => (
-                    <div
-                      key={trend.name}
-                      className="flex items-center gap-4 p-3 rounded-xl bg-brand-900/40 border border-brand-700/30 hover:border-brand-600/40 transition-colors group"
-                      style={{ animationDelay: `${i * 0.1}s` }}
-                    >
+                    <div key={trend.name}
+                      className="flex items-center gap-4 p-3 rounded-xl bg-sand-50 border border-sand-200 hover:border-coral-200 transition-colors group">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm font-semibold text-white truncate">{trend.name}</p>
+                          <p className="text-sm font-semibold text-charcoal-800 truncate">{trend.name}</p>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full border capitalize font-medium ${stageBadge(trend.stage)}`}>
                             {trend.stage}
                           </span>
                         </div>
-                        <p className="text-xs text-brand-400">{trend.category}</p>
+                        <p className="text-xs text-sand-500">{trend.category}</p>
                       </div>
-
-                      {/* Mini sparkline */}
-                      <div className="w-16 h-8 flex items-end gap-px">
-                        {SAMPLE_SPARKLINE.slice(i, i + 8).map((v, j) => (
-                          <div
-                            key={j}
-                            className="flex-1 rounded-sm bg-brand-400/40"
-                            style={{ height: `${(v / 100) * 100}%`, minHeight: '2px' }}
-                          />
-                        ))}
-                      </div>
-
                       <div className="text-right">
-                        <p className="text-sm font-bold text-emerald-400">{trend.growth}</p>
-                        <p className="text-[10px] text-brand-400">Score: {trend.score}</p>
+                        <p className="text-sm font-bold text-sage-400">{trend.growth}</p>
+                        <p className="text-[10px] text-sand-500">Score: {trend.score}</p>
                       </div>
-
-                      <ArrowUpRight className="h-4 w-4 text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                      <ArrowUpRight className="h-4 w-4 text-sand-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                     </div>
                   ))}
                 </div>
-
-                <div className="mt-4 pt-4 border-t border-brand-700/30 flex items-center justify-between">
-                  <span className="text-[10px] text-brand-500">Updated daily from 5 sources</span>
-                  <Link
-                    to={isAuth ? '/explore' : '/auth/signup'}
-                    className="text-xs text-brand-400 hover:text-brand-300 font-medium flex items-center gap-1 transition-colors"
-                  >
+                <div className="mt-4 pt-4 border-t border-sand-200 flex items-center justify-between">
+                  <span className="text-[10px] text-sand-500">Updated daily from 5 sources</span>
+                  <Link to={isAuth ? '/explore' : '/auth/signup'} className="text-xs text-coral-400 hover:text-coral-500 font-medium flex items-center gap-1 transition-colors">
                     View all 194 topics <ChevronRight className="h-3 w-3" />
                   </Link>
                 </div>
@@ -261,183 +184,108 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ─── FEATURES ─── */}
+        {/* FEATURES */}
         <section className="px-8 py-24 max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight mb-4"
-                style={{ fontFamily: "'Instrument Sans', 'DM Sans', sans-serif" }}>
-              Everything you need to find
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 to-brand-500">
-                winning products
-              </span>
+            <h2 className="text-3xl lg:text-4xl tracking-tight mb-4" style={{ fontFamily: "'Newsreader', Georgia, serif", fontWeight: 400, color: '#1A2A3A' }}>
+              Everything you need to find<br /><span style={{ color: '#E8714A' }}>winning products</span>
             </h2>
-            <p className="text-brand-200/60 max-w-xl mx-auto">
-              From raw data signals to actionable product specs — NeuraNest handles the entire intelligence pipeline.
-            </p>
+            <p className="text-sand-600 max-w-xl mx-auto">From raw data signals to actionable product specs — NeuraNest handles the entire intelligence pipeline.</p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {FEATURES.map((feature, i) => (
-              <div
-                key={feature.title}
-                className="group p-6 rounded-2xl bg-brand-800/30 border border-brand-700/30 hover:border-brand-600/50 transition-all duration-300 hover:bg-brand-800/50"
-                style={{ animationDelay: `${i * 0.08}s` }}
-              >
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                  style={{ backgroundColor: `${feature.color}15`, border: `1px solid ${feature.color}30` }}
-                >
+            {FEATURES.map((feature) => (
+              <div key={feature.title} className="group p-6 rounded-2xl bg-white border border-sand-200 hover:border-coral-200 transition-all duration-300 hover:shadow-md">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: `${feature.color}10`, border: `1px solid ${feature.color}25` }}>
                   <feature.icon className="h-5 w-5" style={{ color: feature.color }} />
                 </div>
-                <h3 className="text-base font-bold text-white mb-2">{feature.title}</h3>
-                <p className="text-sm text-brand-300/60 leading-relaxed">{feature.description}</p>
+                <h3 className="text-base font-bold text-charcoal-800 mb-2">{feature.title}</h3>
+                <p className="text-sm text-sand-600 leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* ─── HOW IT WORKS ─── */}
+        {/* HOW IT WORKS */}
         <section className="px-8 py-24 max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight mb-4"
-                style={{ fontFamily: "'Instrument Sans', 'DM Sans', sans-serif" }}>
-              From signal to decision in
-              <span className="text-brand-400 ml-2">three steps</span>
+            <h2 className="text-3xl lg:text-4xl tracking-tight mb-4" style={{ fontFamily: "'Newsreader', Georgia, serif", fontWeight: 400, color: '#1A2A3A' }}>
+              From signal to decision in <span style={{ color: '#E8714A' }}>three steps</span>
             </h2>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              {
-                step: '01',
-                title: 'We ingest signals',
-                description: 'Every day, our pipelines pull search interest from Google Trends, social buzz from Reddit, and competitive data from Amazon — covering 194 product niches.',
-                icon: Globe,
-              },
-              {
-                step: '02',
-                title: 'ML scores & forecasts',
-                description: 'Feature engineering computes growth rates, acceleration, and cross-source confirmation. Prophet models forecast demand 3-6 months ahead.',
-                icon: BarChart3,
-              },
-              {
-                step: '03',
-                title: 'You act on insights',
-                description: 'Browse scored opportunities, dive into competition analysis, read review intelligence, and get AI-generated product specs for your next winner.',
-                icon: Target,
-              },
+              { step: '01', title: 'We ingest signals', description: 'Every day, our pipelines pull search interest from Google Trends, social buzz from Reddit, and competitive data from Amazon — covering 194 product niches.', icon: Globe },
+              { step: '02', title: 'ML scores & forecasts', description: 'Feature engineering computes growth rates, acceleration, and cross-source confirmation. Prophet models forecast demand 3-6 months ahead.', icon: BarChart3 },
+              { step: '03', title: 'You act on insights', description: 'Browse scored opportunities, dive into competition analysis, read review intelligence, and get AI-generated product specs for your next winner.', icon: Target },
             ].map((item, i) => (
-              <div key={item.step} className="relative">
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-12 left-full w-8 border-t border-dashed border-brand-700/50 -translate-y-1/2 z-0" style={{ width: 'calc(100% - 3rem)', left: '85%' }} />
-                )}
-                <div className="relative z-10 p-6">
-                  <div className="text-5xl font-black text-brand-700/40 mb-4" style={{ fontFamily: "'Instrument Sans', 'DM Sans', sans-serif" }}>
-                    {item.step}
-                  </div>
-                  <div className="w-11 h-11 rounded-xl bg-brand-500/15 border border-brand-500/25 flex items-center justify-center mb-4">
-                    <item.icon className="h-5 w-5 text-brand-400" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
-                  <p className="text-sm text-brand-300/60 leading-relaxed">{item.description}</p>
+              <div key={item.step} className="relative p-6">
+                <div className="text-5xl font-black mb-4" style={{ fontFamily: "'Newsreader', Georgia, serif", color: 'rgba(232,113,74,0.15)' }}>{item.step}</div>
+                <div className="w-11 h-11 rounded-xl bg-coral-50 border border-coral-200 flex items-center justify-center mb-4">
+                  <item.icon className="h-5 w-5 text-coral-400" />
                 </div>
+                <h3 className="text-lg font-bold text-charcoal-800 mb-2">{item.title}</h3>
+                <p className="text-sm text-sand-600 leading-relaxed">{item.description}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* ─── PRICING ─── */}
+        {/* PRICING */}
         <section className="px-8 py-24 max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight mb-4"
-                style={{ fontFamily: "'Instrument Sans', 'DM Sans', sans-serif" }}>
+            <h2 className="text-3xl lg:text-4xl tracking-tight mb-4" style={{ fontFamily: "'Newsreader', Georgia, serif", fontWeight: 400, color: '#1A2A3A' }}>
               Simple, transparent pricing
             </h2>
-            <p className="text-brand-200/60">Start free. Upgrade when you're ready to go deeper.</p>
+            <p className="text-sand-600">Start free. Upgrade when you're ready to go deeper.</p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-            {/* Free Trial */}
-            <div className="p-8 rounded-2xl bg-brand-800/30 border border-brand-700/30">
-              <h3 className="text-lg font-bold text-white mb-1">Free Trial</h3>
-              <p className="text-brand-400 text-sm mb-6">7 days full access</p>
-              <p className="text-4xl font-extrabold text-white mb-6">$0<span className="text-base font-normal text-brand-400"> for 7 days</span></p>
+            <div className="p-8 rounded-2xl bg-white border border-sand-200">
+              <h3 className="text-lg font-bold text-charcoal-800 mb-1">Free Trial</h3>
+              <p className="text-sand-500 text-sm mb-6">7 days full access</p>
+              <p className="text-4xl mb-6" style={{ fontFamily: "'Newsreader', Georgia, serif", fontWeight: 500, color: '#1A2A3A' }}>$0<span className="text-base font-normal text-sand-500"> for 7 days</span></p>
               <ul className="space-y-3 mb-8">
-                {[
-                  'Full platform access for 7 days',
-                  'Browse all trending topics',
-                  'Trend detail with timeseries chart',
-                  'Opportunity scores',
-                  'No credit card required',
-                ].map(f => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-brand-200/70">
-                    <CheckCircle2 className="h-4 w-4 text-brand-500 mt-0.5 flex-shrink-0" />
-                    {f}
+                {['Full platform access for 7 days', 'Browse all trending topics', 'Trend detail with timeseries chart', 'Opportunity scores', 'No credit card required'].map(f => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm text-sand-700">
+                    <CheckCircle2 className="h-4 w-4 text-coral-400 mt-0.5 flex-shrink-0" />{f}
                   </li>
                 ))}
               </ul>
-              <Link
-                to="/auth/signup"
-                className="block w-full py-3 text-center border border-brand-500/40 hover:border-brand-500/70 text-brand-300 hover:text-white rounded-xl text-sm font-semibold transition-all"
-              >
+              <Link to="/auth/signup" className="block w-full py-3 text-center border border-coral-300 hover:border-coral-400 text-coral-500 hover:text-coral-600 rounded-xl text-sm font-semibold transition-all">
                 Start Free Trial
               </Link>
             </div>
-
-            {/* Pro */}
-            <div className="p-8 rounded-2xl bg-gradient-to-b from-brand-700/40 to-brand-800/40 border border-brand-500/30 relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-brand-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-full">
-                Popular
-              </div>
-              <h3 className="text-lg font-bold text-white mb-1">Pro</h3>
-              <p className="text-brand-300 text-sm mb-6">Full intelligence suite</p>
-              <p className="text-4xl font-extrabold text-white mb-6">$99<span className="text-base font-normal text-brand-300">/mo</span></p>
+            <div className="p-8 rounded-2xl bg-white border border-coral-200 relative shadow-md">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-coral-400 text-white text-[10px] font-bold uppercase tracking-wider rounded-full">Popular</div>
+              <h3 className="text-lg font-bold text-charcoal-800 mb-1">Pro</h3>
+              <p className="text-sand-600 text-sm mb-6">Full intelligence suite</p>
+              <p className="text-4xl mb-6" style={{ fontFamily: "'Newsreader', Georgia, serif", fontWeight: 500, color: '#1A2A3A' }}>$99<span className="text-base font-normal text-sand-500">/mo</span></p>
               <ul className="space-y-3 mb-8">
-                {[
-                  'Everything in Free',
-                  'Score explanations & breakdowns',
-                  'Forecast confidence intervals',
-                  'Competition & review intelligence',
-                  'Gen-Next AI product specs',
-                  'Watchlist (up to 50 topics)',
-                  'Alerts (up to 10 active)',
-                  'CSV export',
-                ].map(f => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-brand-100/80">
-                    <CheckCircle2 className="h-4 w-4 text-brand-400 mt-0.5 flex-shrink-0" />
-                    {f}
+                {['Everything in Free', 'Score explanations & breakdowns', 'Forecast confidence intervals', 'Competition & review intelligence', 'Gen-Next AI product specs', 'Watchlist (up to 50 topics)', 'Alerts (up to 10 active)', 'CSV export'].map(f => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm text-sand-700">
+                    <CheckCircle2 className="h-4 w-4 text-coral-400 mt-0.5 flex-shrink-0" />{f}
                   </li>
                 ))}
               </ul>
-              <Link
-                to="/auth/signup"
-                className="block w-full py-3 text-center bg-brand-500 hover:bg-brand-400 text-white rounded-xl text-sm font-bold transition-all hover:shadow-lg hover:shadow-brand-500/25"
-              >
+              <Link to="/auth/signup" className="block w-full py-3 text-center bg-coral-400 hover:bg-coral-500 text-white rounded-xl text-sm font-bold transition-all">
                 Start Pro Trial
               </Link>
             </div>
           </div>
         </section>
 
-        {/* ─── CTA ─── */}
+        {/* CTA */}
         <section className="px-8 py-24 max-w-4xl mx-auto text-center">
-          <div className="p-12 rounded-3xl bg-gradient-to-br from-brand-700/30 to-brand-800/30 border border-brand-600/20 relative overflow-hidden">
-            <div className="absolute inset-0 bg-brand-500/5" style={{
-              backgroundImage: `radial-gradient(circle at 50% 50%, rgba(46,134,193,0.12) 0%, transparent 70%)`,
-            }} />
+          <div className="p-12 rounded-3xl bg-white border border-sand-200 relative overflow-hidden shadow-sm">
+            <div className="absolute inset-0" style={{ backgroundImage: `radial-gradient(circle at 50% 50%, rgba(232,113,74,0.06) 0%, transparent 70%)` }} />
             <div className="relative z-10">
-              <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight mb-4"
-                  style={{ fontFamily: "'Instrument Sans', 'DM Sans', sans-serif" }}>
+              <h2 className="text-3xl lg:text-4xl tracking-tight mb-4" style={{ fontFamily: "'Newsreader', Georgia, serif", fontWeight: 400, color: '#1A2A3A' }}>
                 Stop guessing. Start knowing.
               </h2>
-              <p className="text-brand-200/60 mb-8 max-w-lg mx-auto">
+              <p className="text-sand-600 mb-8 max-w-lg mx-auto">
                 Join product researchers who use NeuraNest to find high-opportunity niches backed by data, not hunches.
               </p>
-              <Link
-                to={isAuth ? '/dashboard' : '/auth/signup'}
-                className="inline-flex items-center gap-2 px-8 py-4 bg-brand-500 hover:bg-brand-400 text-white rounded-xl text-sm font-bold transition-all duration-200 hover:shadow-xl hover:shadow-brand-500/30"
-              >
+              <Link to={isAuth ? '/dashboard' : '/auth/signup'}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-coral-400 hover:bg-coral-500 text-white rounded-xl text-sm font-bold transition-all duration-200">
                 {isAuth ? 'Go to Dashboard' : 'Create Free Account'}
                 <ArrowRight className="h-4 w-4" />
               </Link>
@@ -445,16 +293,16 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ─── FOOTER ─── */}
-        <footer className="px-8 py-8 max-w-7xl mx-auto border-t border-brand-800/50">
+        {/* FOOTER */}
+        <footer className="px-8 py-8 max-w-7xl mx-auto border-t border-sand-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center">
-                <TrendingUp className="h-4 w-4 text-white" />
+              <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: '#E8714A' }}>
+                <BarChart3 className="h-4 w-4 text-white" />
               </div>
-              <span className="text-sm font-semibold text-brand-400">NeuraNest</span>
+              <span className="text-sm font-semibold text-sand-600">NeuraNest</span>
             </div>
-            <p className="text-xs text-brand-600">© 2026 NeuraNest. Trend Intelligence Platform.</p>
+            <p className="text-xs text-sand-400">© 2026 NeuraNest. Trend Intelligence Platform.</p>
           </div>
         </footer>
       </div>

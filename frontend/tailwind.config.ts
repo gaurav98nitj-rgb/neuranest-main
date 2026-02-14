@@ -9,7 +9,7 @@ export default {
         mono: ['JetBrains Mono', 'SF Mono', 'Consolas', 'monospace'],
       },
       colors: {
-        // Primary
+        // ============ PRIMARY WARM PALETTE ============
         coral: {
           50:  '#FFF6F3',
           100: '#FCEEE8',
@@ -22,7 +22,6 @@ export default {
           800: '#6B2E1A',
           900: '#4A1F12',
         },
-        // Charcoal (dark base)
         charcoal: {
           50:  '#F4F6F8',
           100: '#E2E7EC',
@@ -35,7 +34,6 @@ export default {
           800: '#111D29',
           900: '#0A1219',
         },
-        // Warm neutrals (Claude's cream tones)
         sand: {
           50:  '#FDFCFB',
           100: '#F9F7F4',
@@ -48,7 +46,6 @@ export default {
           800: '#3D3832',
           900: '#2A2520',
         },
-        // Success green
         sage: {
           50:  '#E8F5EE',
           100: '#D1EBDD',
@@ -58,7 +55,6 @@ export default {
           500: '#136B42',
           600: '#0D4F31',
         },
-        // Warning amber
         amber: {
           50:  '#FFF8E6',
           100: '#FFEDB3',
@@ -67,7 +63,6 @@ export default {
           400: '#B07A0A',
           500: '#8C6108',
         },
-        // Error rose
         rose: {
           50:  '#FFF0F0',
           100: '#FDDCDC',
@@ -76,7 +71,6 @@ export default {
           400: '#C0392B',
           500: '#962D22',
         },
-        // AI / intelligence accent
         plum: {
           50:  '#F3EEFF',
           100: '#E4D8FF',
@@ -85,6 +79,43 @@ export default {
           400: '#7C3AED',
           500: '#6025C7',
         },
+
+        // ============ LEGACY COLOR ALIASES ============
+        // These map the OLD dark-theme class names to warm colors
+        // so all existing pages work without any TSX edits.
+        //
+        // OLD THEME:  bg-brand-900 = dark navy page background
+        // NEW THEME:  bg-brand-900 = warm cream (#F9F7F4)
+
+        brand: {
+          100: '#1A2A3A',   // text-brand-100 → charcoal-700 (primary heading)
+          200: '#2D3E50',   // text-brand-200 → charcoal-600 (secondary text)
+          300: '#5C5549',   // text-brand-300 → sand-700
+          400: '#8B8479',   // text-brand-400 → sand-600 (muted text)
+          500: '#E8714A',   // bg-brand-500  → coral-400 (accent/buttons)
+          600: '#D4623D',   // bg-brand-600  → coral-500 (accent darker)
+          700: '#E6E1DA',   // border-brand-700 → sand-300
+          800: '#F0ECE6',   // bg-brand-800  → sand-200 (secondary bg)
+          900: '#F9F7F4',   // bg-brand-900  → sand-100 (page bg cream)
+        },
+
+        // Surface / card backgrounds
+        srf: {
+          DEFAULT: '#FFFFFF',   // bg-srf → white cards
+          1: '#FFFFFF',         // bg-srf-1 → white
+          2: '#F0ECE6',         // bg-srf-2 → sand-200 hover
+        },
+        surface: {
+          1: '#FFFFFF',
+          2: '#F0ECE6',
+        },
+
+        // Border colors
+        ln: {
+          DEFAULT: '#E6E1DA',   // border-ln → sand-300
+          lt: '#D4CEC5',        // border-ln-lt → sand-400
+        },
+        line: '#E6E1DA',        // border-line → sand-300
       },
     },
   },

@@ -4,25 +4,203 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    @apply bg-sand-100 text-sand-900 antialiased;
+    font-family: 'Plus Jakarta Sans', 'Helvetica Neue', 'Arial', sans-serif;
+  }
+  h1, h2, h3 {
+    font-family: 'Newsreader', 'Georgia', 'Times New Roman', serif;
+    letter-spacing: -0.02em;
+    color: #2A2520;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+    @apply bg-white rounded-xl border border-sand-300 shadow-sm;
+  }
+  .card:hover {
+    @apply border-sand-400;
+    box-shadow: 0 4px 12px rgba(42, 37, 32, 0.08);
   }
   .badge-emerging {
-    @apply bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full;
+    @apply bg-sage-50 text-sage-400 text-xs font-medium px-2.5 py-0.5 rounded-full;
   }
   .badge-exploding {
-    @apply bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full;
+    @apply bg-coral-100 text-coral-500 text-xs font-medium px-2.5 py-0.5 rounded-full;
   }
   .badge-peaking {
-    @apply bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full;
+    @apply bg-amber-50 text-amber-300 text-xs font-medium px-2.5 py-0.5 rounded-full;
   }
   .badge-declining {
-    @apply bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full;
+    @apply bg-rose-50 text-rose-400 text-xs font-medium px-2.5 py-0.5 rounded-full;
   }
 }
+
+/* ============================================================
+   TEXT-WHITE → DARK INK OVERRIDE
+   
+   The old theme used text-white everywhere because backgrounds
+   were dark navy. Now backgrounds are cream/white, so text-white
+   makes text invisible. 
+   
+   Strategy: Override text-white AFTER @tailwind utilities so we
+   win the specificity war. Then re-enable white on buttons and
+   colored backgrounds.
+   ============================================================ */
+
+/* 
+  Override text-white globally on h1-h6, p, span, div, label, td, th, li
+  These are content elements that should NEVER be white on a light bg.
+  We use element+class selector for higher specificity than Tailwind.
+*/
+h1.text-white, h2.text-white, h3.text-white, h4.text-white,
+h5.text-white, h6.text-white { color: #2A2520 !important; }
+
+p.text-white  { color: #5C5549 !important; }
+span.text-white { color: #2A2520 !important; }
+label.text-white { color: #5C5549 !important; }
+th.text-white { color: #5C5549 !important; }
+
+/* Divs with text-white that are page sections / headings */
+div.text-white { color: #2A2520 !important; }
+
+/* RE-ENABLE white text where it belongs */
+
+/* Buttons always keep white text */
+button.text-white { color: #FFFFFF !important; }
+button .text-white { color: #FFFFFF !important; }
+button[class*="text-white"] { color: #FFFFFF !important; }
+
+/* Anchors styled as buttons */
+a.text-white { color: #FFFFFF !important; }
+
+/* Any element inside a colored button/badge bg keeps white */
+[class*="bg-brand-500"] { color: #FFFFFF !important; }
+[class*="bg-brand-600"] { color: #FFFFFF !important; }
+[class*="bg-coral-4"] { color: #FFFFFF !important; }
+[class*="bg-coral-5"] { color: #FFFFFF !important; }
+[class*="bg-coral-6"] { color: #FFFFFF !important; }
+[class*="bg-emerald-600"] { color: #FFFFFF !important; }
+[class*="bg-emerald-500"] { color: #FFFFFF !important; }
+[class*="bg-red-600"] { color: #FFFFFF !important; }
+[class*="bg-red-500"] { color: #FFFFFF !important; }
+[class*="bg-violet-600"] { color: #FFFFFF !important; }
+[class*="bg-violet-500"] { color: #FFFFFF !important; }
+[class*="bg-amber-600"] { color: #FFFFFF !important; }
+[class*="bg-blue-600"] { color: #FFFFFF !important; }
+[class*="bg-indigo-600"] { color: #FFFFFF !important; }
+[class*="bg-purple-600"] { color: #FFFFFF !important; }
+[class*="bg-charcoal-7"] { color: #FFFFFF !important; }
+[class*="bg-charcoal-8"] { color: #FFFFFF !important; }
+[class*="bg-charcoal-9"] { color: #FFFFFF !important; }
+
+/* Sidebar keeps white text (it has dark charcoal bg via Layout.tsx) */
+nav .text-white, nav span.text-white, nav div.text-white,
+aside .text-white, aside span.text-white, aside div.text-white { color: #FFFFFF !important; }
+
+/* ============================================================
+   STAGE BADGE DARK-BG OVERRIDES
+   emerald-900/60, orange-900/60 etc had dark bg + light text.
+   Now we flip to light bg + darker text.
+   ============================================================ */
+
+/* Emerald / Emerging */
+.bg-emerald-900\/60 { background-color: #E8F5EE !important; color: #1A8754 !important; }
+.bg-emerald-900 { background-color: #E8F5EE !important; }
+.text-emerald-300 { color: #1A8754 !important; }
+.text-emerald-400 { color: #1A8754 !important; }
+.border-emerald-700 { border-color: #A3D7BB !important; }
+.border-emerald-800 { border-color: #A3D7BB !important; }
+
+/* Orange / Exploding */
+.bg-orange-900\/60 { background-color: #FCEEE8 !important; color: #D4623D !important; }
+.bg-orange-900 { background-color: #FCEEE8 !important; }
+.text-orange-300 { color: #D4623D !important; }
+.text-orange-400 { color: #D4623D !important; }
+
+/* Yellow / Peaking */
+.bg-yellow-900\/60 { background-color: #FFF8E6 !important; color: #D4930D !important; }
+.bg-yellow-900 { background-color: #FFF8E6 !important; }
+.text-yellow-300 { color: #D4930D !important; }
+.text-yellow-400 { color: #D4930D !important; }
+
+/* Red / Declining */
+.bg-red-900\/60 { background-color: #FFF0F0 !important; color: #C0392B !important; }
+.bg-red-900 { background-color: #FFF0F0 !important; }
+.text-red-300 { color: #C0392B !important; }
+.text-red-400 { color: #C0392B !important; }
+
+/* Blue */
+.bg-blue-900\/60 { background-color: #EBF0FF !important; color: #3B5998 !important; }
+.bg-blue-900 { background-color: #EBF0FF !important; }
+.text-blue-300 { color: #3B5998 !important; }
+.text-blue-400 { color: #7C3AED !important; }
+
+/* Purple */
+.bg-purple-900\/60 { background-color: #F3EEFF !important; color: #7C3AED !important; }
+.bg-purple-900 { background-color: #F3EEFF !important; }
+.text-purple-300 { color: #7C3AED !important; }
+.text-purple-400 { color: #7C3AED !important; }
+
+/* Violet */
+.text-violet-300 { color: #7C3AED !important; }
+.text-violet-400 { color: #7C3AED !important; }
+.bg-violet-500 { background-color: #F3EEFF !important; }
+
+/* Cyan → charcoal tones */
+.text-cyan-300 { color: #425B73 !important; }
+.text-cyan-400 { color: #425B73 !important; }
+.bg-cyan-600 { background-color: #425B73 !important; }
+
+/* Pink → coral */
+.text-pink-400 { color: #E8714A !important; }
+
+/* Amber button → coral */
+.bg-amber-600 { background-color: #E8714A !important; }
+.hover\:bg-amber-500:hover { background-color: #D4623D !important; }
+
+/* ============================================================
+   SHADOW → WARM TONES
+   ============================================================ */
+.shadow-black\/20, .shadow-black\/10 {
+  box-shadow: 0 4px 12px rgba(42, 37, 32, 0.08) !important;
+}
+
+/* ============================================================
+   FORM ELEMENTS
+   ============================================================ */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+select,
+textarea {
+  background: #FFFFFF !important;
+  border: 1.5px solid #E6E1DA !important;
+  color: #2A2520 !important;
+  border-radius: 0.625rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+input::placeholder, textarea::placeholder {
+  color: #B8B2A8 !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #E8714A !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(232, 113, 74, 0.1);
+}
+select option {
+  background: #FFFFFF;
+  color: #2A2520;
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #F9F7F4; }
+::-webkit-scrollbar-thumb { background: #D4CEC5; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #B8B2A8; }
+
+table { border-collapse: collapse; }

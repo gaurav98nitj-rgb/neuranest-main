@@ -34,3 +34,5 @@ Thumbs.db
 *.log
 api/models/*.pkl
 .claude/
+ba_import/
+ba_import_log.txt

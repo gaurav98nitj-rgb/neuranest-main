@@ -1,34 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { api } from '../lib/api'
-import { Upload, Search, TrendingUp, Building2, Clock, CheckCircle2, XCircle, Loader2, BarChart3, ArrowUpRight, ArrowDownRight, ChevronRight, X, RefreshCw } from 'lucide-react'
+import { Upload, Search, TrendingUp, Building2, Clock, CheckCircle2, XCircle, Loader2, BarChart3, ArrowUpRight, ArrowDownRight, RefreshCw } from 'lucide-react'
 
-interface ImportJob {
-  id: string; filename: string; country: string; report_month: string | null
-  status: string; total_rows: number; rows_imported: number; rows_skipped: number
-  rows_error: number; error_message: string | null; created_at: string | null; completed_at: string | null
+const C = {
+  bg: '#F9F7F4', card: '#FFFFFF', border: '#E6E1DA', borderLight: '#F0ECE6',
+  coral: '#E8714A', coralLight: '#FCEEE8', sage: '#1A8754', sageLight: '#E8F5EE',
+  amber: '#D4930D', amberLight: '#FFF8E6', rose: '#C0392B', roseLight: '#FFF0F0',
+  plum: '#7C3AED', plumLight: '#F3EEFF', charcoal: '#2D3E50', charcoalDeep: '#1A2A3A',
+  ink: '#2A2520', slate: '#5C5549', stone: '#8B8479', sand: '#B8B2A8', cyan: '#0891B2',
 }
 
-interface BAStats {
-  total_rows: number; countries: string[]; months: string[]
-  total_unique_terms: number; total_imports: number; latest_month: string | null
-}
+interface ImportJob { id: string; filename: string; country: string; report_month: string | null; status: string; total_rows: number; rows_imported: number; rows_skipped: number; rows_error: number; error_message: string | null; created_at: string | null; completed_at: string | null }
+interface BAStats { total_rows: number; countries: string[]; months: string[]; total_unique_terms: number; total_imports: number; latest_month: string | null }
+interface TrendingTerm { search_term: string; current_rank: number; past_rank: number; rank_improvement: number; brand_1: string | null; category_1: string | null; click_share_1: number | null; conversion_share_1: number | null }
+interface SearchResult { search_frequency_rank: number; search_term: string; brand_1: string | null; category_1: string | null; click_share_1: number | null; conversion_share_1: number | null; report_month: string; country: string }
 
-interface TrendingTerm {
-  search_term: string; current_rank: number; past_rank: number; rank_improvement: number
-  brand_1: string | null; category_1: string | null; click_share_1: number | null; conversion_share_1: number | null
-}
-
-interface SearchResult {
-  search_frequency_rank: number; search_term: string; brand_1: string | null
-  category_1: string | null; click_share_1: number | null; conversion_share_1: number | null
-  report_month: string; country: string
-}
-
-const STATUS_ICONS: Record<string, JSX.Element> = {
-  pending: <Clock className="h-4 w-4 text-brand-400" />,
-  processing: <Loader2 className="h-4 w-4 text-amber-400 animate-spin" />,
-  completed: <CheckCircle2 className="h-4 w-4 text-emerald-400" />,
-  failed: <XCircle className="h-4 w-4 text-red-400" />,
+const STATUS_ICON: Record<string, { color: string; label: string }> = {
+  pending: { color: C.stone, label: 'PENDING' }, processing: { color: C.amber, label: 'PROCESSING' },
+  completed: { color: C.sage, label: 'COMPLETED' }, failed: { color: C.rose, label: 'FAILED' },
 }
 
 export default function AmazonBAPage() {
@@ -44,319 +33,232 @@ export default function AmazonBAPage() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { loadData() }, [])
-
   const loadData = async () => {
     setLoading(true)
     try {
-      const [s, j] = await Promise.all([
-        api.get('/amazon-ba/stats').catch(() => ({ data: null })),
-        api.get('/amazon-ba/jobs').catch(() => ({ data: [] })),
-      ])
-      setStats(s.data)
-      setJobs(j.data || [])
-
-      // Load trending if data exists
-      if (s.data && s.data.total_rows > 0) {
-        const t = await api.get('/amazon-ba/trending?limit=30').catch(() => ({ data: [] }))
-        setTrending(t.data || [])
-      }
-    } catch { }
+      const [s, j] = await Promise.all([api.get('/amazon-ba/stats').catch(() => ({ data: null })), api.get('/amazon-ba/jobs').catch(() => ({ data: [] }))])
+      setStats(s.data); setJobs(j.data || [])
+      if (s.data?.total_rows > 0) { const t = await api.get('/amazon-ba/trending?limit=30').catch(() => ({ data: [] })); setTrending(t.data || []) }
+    } catch {}
     setLoading(false)
   }
 
   const handleUpload = async () => {
-    const file = fileRef.current?.files?.[0]
-    if (!file) return
+    const file = fileRef.current?.files?.[0]; if (!file) return
     setUploading(true)
     try {
-      const form = new FormData()
-      form.append('file', file)
-      form.append('country', uploadCountry)
-      const res = await api.post('/amazon-ba/upload', form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 600000,
-      })
+      const form = new FormData(); form.append('file', file); form.append('country', uploadCountry)
+      const res = await api.post('/amazon-ba/upload', form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 600000 })
       alert(`Upload queued! Job ID: ${res.data.job_id}\nFile size: ${res.data.file_size_mb} MB`)
-      if (fileRef.current) fileRef.current.value = ''
-      setTimeout(loadData, 2000)
-    } catch (e: any) {
-      alert(`Upload failed: ${e?.response?.data?.detail || e.message}`)
-    }
+      if (fileRef.current) fileRef.current.value = ''; setTimeout(loadData, 2000)
+    } catch (e: any) { alert(`Upload failed: ${e?.response?.data?.detail || e.message}`) }
     setUploading(false)
   }
 
   const handleSearch = async () => {
     if (searchQuery.length < 2) return
-    try {
-      const res = await api.get(`/amazon-ba/search?q=${encodeURIComponent(searchQuery)}&limit=100`)
-      setSearchResults(res.data || [])
-    } catch { }
+    try { const res = await api.get(`/amazon-ba/search?q=${encodeURIComponent(searchQuery)}&limit=100`); setSearchResults(res.data || []) } catch {}
   }
 
-  const pollJobs = useCallback(async () => {
-    const res = await api.get('/amazon-ba/jobs').catch(() => ({ data: [] }))
-    setJobs(res.data || [])
-  }, [])
-
-  // Poll for processing jobs
+  const pollJobs = useCallback(async () => { const res = await api.get('/amazon-ba/jobs').catch(() => ({ data: [] })); setJobs(res.data || []) }, [])
   useEffect(() => {
     const hasProcessing = jobs.some(j => j.status === 'processing' || j.status === 'pending')
-    if (!hasProcessing) return
-    const interval = setInterval(pollJobs, 3000)
-    return () => clearInterval(interval)
+    if (!hasProcessing) return; const interval = setInterval(pollJobs, 3000); return () => clearInterval(interval)
   }, [jobs, pollJobs])
 
   const countries = ['US', 'UK', 'DE', 'JP', 'IN', 'AU', 'CA', 'MX', 'FR', 'IT', 'ES', 'BR']
 
-  if (loading) {
-    return <div className="min-h-screen bg-srf p-6 flex items-center justify-center">
-      <div className="animate-pulse text-brand-400">Loading Amazon Brand Analytics...</div>
-    </div>
-  }
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: C.bg }}><div style={{ color: C.amber }}>Loading Amazon Brand Analytics...</div></div>
+
+  const thStyle: React.CSSProperties = { textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 600, color: C.stone, textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: `1px solid ${C.border}` }
+  const tdStyle: React.CSSProperties = { padding: '10px 14px', borderBottom: `1px solid ${C.borderLight}`, fontSize: 13 }
 
   return (
-    <div className="min-h-screen bg-srf p-6">
+    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif", color: C.ink }}>
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <BarChart3 className="h-7 w-7 text-amber-400" />
-          <h1 className="text-2xl font-bold text-white">Amazon Brand Analytics</h1>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <BarChart3 style={{ width: 22, height: 22, color: C.amber }} />
+          <h1 style={{ fontSize: 28, fontWeight: 400, margin: 0, color: C.charcoalDeep, fontFamily: "'Newsreader', Georgia, serif" }}>Amazon Brand Analytics</h1>
         </div>
-        <p className="text-brand-300 text-sm ml-10">
-          Import, search, and analyze Amazon search term data. Upload monthly BA files to build the ML training dataset.
-        </p>
+        <p style={{ fontSize: 13, color: C.stone, marginLeft: 32 }}>Import, search, and analyze Amazon search term data. Upload monthly BA files to build the ML training dataset.</p>
       </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-5 gap-4 mb-6">
-        <div className="bg-srf-1 rounded-xl p-4 border border-ln">
-          <p className="text-xs text-brand-400 mb-1">Total Rows</p>
-          <p className="text-2xl font-bold text-white">{(stats?.total_rows || 0).toLocaleString()}</p>
-        </div>
-        <div className="bg-srf-1 rounded-xl p-4 border border-ln">
-          <p className="text-xs text-brand-400 mb-1">Unique Terms</p>
-          <p className="text-2xl font-bold text-cyan-300">{(stats?.total_unique_terms || 0).toLocaleString()}</p>
-        </div>
-        <div className="bg-srf-1 rounded-xl p-4 border border-ln">
-          <p className="text-xs text-brand-400 mb-1">Countries</p>
-          <p className="text-2xl font-bold text-emerald-300">{stats?.countries?.length || 0}</p>
-          <p className="text-xs text-brand-500">{stats?.countries?.join(', ') || 'None yet'}</p>
-        </div>
-        <div className="bg-srf-1 rounded-xl p-4 border border-ln">
-          <p className="text-xs text-brand-400 mb-1">Months</p>
-          <p className="text-2xl font-bold text-violet-300">{stats?.months?.length || 0}</p>
-        </div>
-        <div className="bg-srf-1 rounded-xl p-4 border border-ln">
-          <p className="text-xs text-brand-400 mb-1">Imports</p>
-          <p className="text-2xl font-bold text-amber-300">{stats?.total_imports || 0}</p>
-          <p className="text-xs text-brand-500">{stats?.latest_month || 'No data'}</p>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 mb-4 bg-srf-1 rounded-lg p-1 w-fit border border-ln">
-        {(['overview', 'upload', 'search', 'trending', 'brands'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-md text-sm font-medium capitalize transition-colors ${
-              tab === t ? 'bg-amber-600 text-white' : 'text-brand-300 hover:text-white'}`}>
-            {t}
-          </button>
+      {/* KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 24 }}>
+        {[
+          { label: 'Total Rows', value: (stats?.total_rows || 0).toLocaleString(), color: C.charcoal },
+          { label: 'Unique Terms', value: (stats?.total_unique_terms || 0).toLocaleString(), color: C.cyan },
+          { label: 'Countries', value: stats?.countries?.length || 0, sub: stats?.countries?.join(', ') || 'None yet', color: C.sage },
+          { label: 'Months', value: stats?.months?.length || 0, color: C.plum },
+          { label: 'Imports', value: stats?.total_imports || 0, sub: stats?.latest_month || 'No data', color: C.amber },
+        ].map(m => (
+          <div key={m.label} style={{ background: C.card, borderRadius: 12, padding: '16px 20px', border: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em', marginBottom: 4 }}>{m.label}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono', monospace" }}>{m.value}</div>
+            {m.sub && <div style={{ fontSize: 10, color: C.sand, marginTop: 2 }}>{m.sub}</div>}
+          </div>
         ))}
       </div>
 
-      {/* ─── Overview Tab ─── */}
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 3, marginBottom: 20, background: C.card, borderRadius: 10, padding: 3, width: 'fit-content', border: `1px solid ${C.border}` }}>
+        {(['overview', 'upload', 'search', 'trending', 'brands'] as const).map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{
+            padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+            textTransform: 'capitalize', background: tab === t ? C.amber : 'transparent', color: tab === t ? '#fff' : C.stone, transition: 'all 0.2s',
+          }}>{t}</button>
+        ))}
+      </div>
+
+      {/* Overview */}
       {tab === 'overview' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Import Jobs</h2>
-            <button onClick={loadData} className="text-xs text-brand-400 hover:text-white flex items-center gap-1">
-              <RefreshCw className="h-3 w-3" /> Refresh
-            </button>
-          </div>
-          {jobs.length === 0 ? (
-            <div className="bg-srf-1 rounded-xl p-12 border border-ln text-center">
-              <Upload className="h-10 w-10 text-brand-500 mx-auto mb-3" />
-              <p className="text-brand-300 mb-2">No imports yet</p>
-              <p className="text-xs text-brand-500">Go to the Upload tab to import your first Amazon BA file</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {trending.length > 0 && (
+            <div style={{ background: C.card, borderRadius: 14, padding: 24, border: `1px solid ${C.border}` }}>
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: C.charcoalDeep, marginBottom: 14 }}>Top Rising Terms</h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {trending.slice(0, 15).map((t, i) => (
+                  <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 20, background: C.sageLight, color: C.sage, fontSize: 12, fontWeight: 500 }}>
+                    <ArrowUpRight style={{ width: 12, height: 12 }} /> {t.search_term} <span style={{ fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>+{t.rank_improvement.toLocaleString()}</span>
+                  </span>
+                ))}
+              </div>
             </div>
-          ) : (
-            <div className="space-y-2">
-              {jobs.map(job => (
-                <div key={job.id} className="bg-srf-1 rounded-xl p-4 border border-ln flex items-center gap-4">
-                  {STATUS_ICONS[job.status] || STATUS_ICONS.pending}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{job.filename}</p>
-                    <p className="text-xs text-brand-500">
-                      {job.country} · {job.report_month || 'auto-detect'} · {job.created_at?.slice(0, 16).replace('T', ' ')}
-                    </p>
+          )}
+          {jobs.length > 0 && (
+            <div style={{ background: C.card, borderRadius: 14, padding: 24, border: `1px solid ${C.border}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <h3 style={{ fontSize: 15, fontWeight: 600, color: C.charcoalDeep, margin: 0 }}>Import History</h3>
+                <button onClick={loadData} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: C.stone }}>
+                  <RefreshCw style={{ width: 12, height: 12 }} /> Refresh
+                </button>
+              </div>
+              {jobs.map(job => {
+                const s = STATUS_ICON[job.status] || STATUS_ICON.pending
+                return (
+                  <div key={job.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${C.borderLight}` }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{job.filename}</div>
+                      <div style={{ fontSize: 11, color: C.stone, marginTop: 2 }}>
+                        {job.country} · {job.rows_imported.toLocaleString()} rows · {job.created_at ? new Date(job.created_at).toLocaleDateString() : ''}
+                      </div>
+                      {job.error_message && <div style={{ fontSize: 11, color: C.rose, marginTop: 2 }}>{job.error_message}</div>}
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: s.color }}>{s.label}</span>
                   </div>
-                  <div className="text-right">
-                    {job.status === 'processing' && (
-                      <p className="text-sm text-amber-300">{job.rows_imported.toLocaleString()} / {job.total_rows.toLocaleString()} rows</p>
-                    )}
-                    {job.status === 'completed' && (
-                      <p className="text-sm text-emerald-300">{job.rows_imported.toLocaleString()} imported</p>
-                    )}
-                    {job.status === 'failed' && (
-                      <p className="text-xs text-red-400 max-w-xs truncate">{job.error_message}</p>
-                    )}
-                    <p className={`text-xs font-medium ${
-                      job.status === 'completed' ? 'text-emerald-400' :
-                      job.status === 'failed' ? 'text-red-400' :
-                      job.status === 'processing' ? 'text-amber-400' : 'text-brand-400'
-                    }`}>{job.status.toUpperCase()}</p>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
       )}
 
-      {/* ─── Upload Tab ─── */}
+      {/* Upload */}
       {tab === 'upload' && (
-        <div className="max-w-2xl">
-          <div className="bg-srf-1 rounded-xl p-6 border border-ln">
-            <h2 className="text-lg font-semibold text-white mb-4">Upload Amazon Brand Analytics File</h2>
-            <p className="text-sm text-brand-400 mb-6">
-              Upload your monthly Amazon Brand Analytics search term report. Supports XLSX and CSV files up to 1 GB.
-              The report month is auto-detected from the Reporting Date column.
-            </p>
-
-            <div className="space-y-4">
+        <div style={{ maxWidth: 600 }}>
+          <div style={{ background: C.card, borderRadius: 14, padding: 24, border: `1px solid ${C.border}` }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: C.charcoalDeep, marginBottom: 6 }}>Upload Amazon Brand Analytics File</h2>
+            <p style={{ fontSize: 12, color: C.stone, marginBottom: 20 }}>Upload your monthly Amazon Brand Analytics search term report. Supports XLSX and CSV files up to 1 GB.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label className="block text-sm text-brand-300 mb-1">Country</label>
-                <select value={uploadCountry} onChange={e => setUploadCountry(e.target.value)}
-                  className="bg-srf border border-ln rounded-lg px-3 py-2 text-white text-sm w-40">
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.slate, marginBottom: 4 }}>Country</label>
+                <select value={uploadCountry} onChange={e => setUploadCountry(e.target.value)} style={{ padding: '8px 14px', borderRadius: 8, border: `1px solid ${C.border}`, background: C.card, fontSize: 13, color: C.ink }}>
                   {countries.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-
               <div>
-                <label className="block text-sm text-brand-300 mb-1">File (.xlsx or .csv)</label>
-                <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.tsv"
-                  className="block w-full text-sm text-brand-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amber-600 file:text-white hover:file:bg-amber-500 cursor-pointer" />
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.slate, marginBottom: 4 }}>File (.xlsx or .csv)</label>
+                <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.tsv" style={{ fontSize: 13 }} />
               </div>
-
-              <button onClick={handleUpload} disabled={uploading}
-                className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              <button onClick={handleUpload} disabled={uploading} style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', background: uploading ? C.sand : C.amber, color: '#fff',
+                border: 'none', borderRadius: 10, cursor: uploading ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, width: 'fit-content',
+              }}>
+                {uploading ? <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} /> : <Upload style={{ width: 14, height: 14 }} />}
                 {uploading ? 'Uploading...' : 'Upload & Import'}
               </button>
             </div>
-
-            <div className="mt-6 p-4 bg-srf rounded-lg border border-ln">
-              <p className="text-xs font-medium text-brand-300 mb-2">Expected File Format (21 columns):</p>
-              <p className="text-xs text-brand-500">
-                Search Frequency Rank | Search Term | Top Clicked Brand #1-3 | Top Clicked Category #1-3 |
-                Top Clicked Product #1-3 (ASIN, Title, Click Share, Conversion Share) | Reporting Date
-              </p>
+            <div style={{ marginTop: 20, padding: 14, background: C.bg, borderRadius: 10, border: `1px solid ${C.borderLight}` }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: C.slate, marginBottom: 4 }}>Expected File Format (21 columns):</p>
+              <p style={{ fontSize: 11, color: C.stone, margin: 0 }}>Search Frequency Rank | Search Term | Top Clicked Brand #1-3 | Top Clicked Category #1-3 | Top Clicked Product #1-3 (ASIN, Title, Click Share, Conversion Share) | Reporting Date</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── Search Tab ─── */}
+      {/* Search */}
       {tab === 'search' && (
         <div>
-          <div className="flex gap-2 mb-4">
-            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSearch()}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()}
               placeholder="Search Amazon BA terms (e.g., hydrogen water, skincare, tinnitus)..."
-              className="flex-1 bg-srf-1 border border-ln rounded-lg px-4 py-2.5 text-white text-sm placeholder-brand-500" />
-            <button onClick={handleSearch}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-              <Search className="h-4 w-4" /> Search
+              style={{ flex: 1, padding: '10px 16px', borderRadius: 10, border: `1px solid ${C.border}`, background: C.card, fontSize: 13, color: C.ink, outline: 'none' }}
+            />
+            <button onClick={handleSearch} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', background: C.cyan, color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+              <Search style={{ width: 14, height: 14 }} /> Search
             </button>
           </div>
-
           {searchResults.length > 0 && (
-            <div className="bg-srf-1 rounded-xl border border-ln overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-ln">
-                    <th className="text-left px-4 py-3 text-xs text-brand-400 font-medium">Rank</th>
-                    <th className="text-left px-4 py-3 text-xs text-brand-400 font-medium">Search Term</th>
-                    <th className="text-left px-4 py-3 text-xs text-brand-400 font-medium">Brand #1</th>
-                    <th className="text-left px-4 py-3 text-xs text-brand-400 font-medium">Category</th>
-                    <th className="text-right px-4 py-3 text-xs text-brand-400 font-medium">Click %</th>
-                    <th className="text-right px-4 py-3 text-xs text-brand-400 font-medium">Conv %</th>
-                    <th className="text-left px-4 py-3 text-xs text-brand-400 font-medium">Month</th>
-                  </tr>
-                </thead>
+            <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead><tr>{['Rank', 'Search Term', 'Brand #1', 'Category', 'Click %', 'Conv %', 'Month'].map((h, i) => <th key={i} style={{ ...thStyle, textAlign: i >= 4 ? 'right' : 'left' }}>{h}</th>)}</tr></thead>
                 <tbody>
                   {searchResults.map((r, i) => (
-                    <tr key={i} className="border-b border-ln/50 hover:bg-srf">
-                      <td className="px-4 py-2.5 font-mono text-amber-300">{r.search_frequency_rank}</td>
-                      <td className="px-4 py-2.5 text-white font-medium">{r.search_term}</td>
-                      <td className="px-4 py-2.5 text-brand-300">{r.brand_1 || '-'}</td>
-                      <td className="px-4 py-2.5 text-brand-400 text-xs">{r.category_1 || '-'}</td>
-                      <td className="px-4 py-2.5 text-right text-cyan-300">{r.click_share_1?.toFixed(2) || '-'}%</td>
-                      <td className="px-4 py-2.5 text-right text-emerald-300">{r.conversion_share_1?.toFixed(2) || '-'}%</td>
-                      <td className="px-4 py-2.5 text-brand-500 text-xs">{r.report_month?.slice(0, 7)}</td>
+                    <tr key={i} style={{ transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = C.bg} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <td style={{ ...tdStyle, fontFamily: "'JetBrains Mono', monospace", color: C.amber, fontWeight: 600 }}>{r.search_frequency_rank}</td>
+                      <td style={{ ...tdStyle, fontWeight: 600, color: C.ink }}>{r.search_term}</td>
+                      <td style={{ ...tdStyle, color: C.slate }}>{r.brand_1 || '-'}</td>
+                      <td style={{ ...tdStyle, color: C.stone, fontSize: 11 }}>{r.category_1 || '-'}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right', color: C.cyan, fontFamily: "'JetBrains Mono', monospace" }}>{r.click_share_1?.toFixed(2) || '-'}%</td>
+                      <td style={{ ...tdStyle, textAlign: 'right', color: C.sage, fontFamily: "'JetBrains Mono', monospace" }}>{r.conversion_share_1?.toFixed(2) || '-'}%</td>
+                      <td style={{ ...tdStyle, color: C.sand, fontSize: 11 }}>{r.report_month?.slice(0, 7)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-
-          {searchResults.length === 0 && searchQuery && (
-            <p className="text-center py-12 text-brand-400">No results. Try a different search term.</p>
-          )}
+          {searchResults.length === 0 && searchQuery && <p style={{ textAlign: 'center', padding: 40, color: C.sand }}>No results. Try a different search term.</p>}
         </div>
       )}
 
-      {/* ─── Trending Tab ─── */}
+      {/* Trending */}
       {tab === 'trending' && (
         <div>
-          <p className="text-sm text-brand-400 mb-4">Search terms with the biggest rank improvement (rising demand signals).</p>
+          <p style={{ fontSize: 12, color: C.stone, marginBottom: 14 }}>Search terms with the biggest rank improvement (rising demand signals).</p>
           {trending.length > 0 ? (
-            <div className="bg-srf-1 rounded-xl border border-ln overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-ln">
-                    <th className="text-left px-4 py-3 text-xs text-brand-400 font-medium">Search Term</th>
-                    <th className="text-right px-4 py-3 text-xs text-brand-400 font-medium">Current Rank</th>
-                    <th className="text-right px-4 py-3 text-xs text-brand-400 font-medium">Previous Rank</th>
-                    <th className="text-right px-4 py-3 text-xs text-brand-400 font-medium">Improvement</th>
-                    <th className="text-left px-4 py-3 text-xs text-brand-400 font-medium">Brand #1</th>
-                    <th className="text-left px-4 py-3 text-xs text-brand-400 font-medium">Category</th>
-                  </tr>
-                </thead>
+            <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead><tr>{['Search Term', 'Current Rank', 'Previous Rank', 'Improvement', 'Brand #1', 'Category'].map((h, i) => <th key={i} style={{ ...thStyle, textAlign: [1,2,3].includes(i) ? 'right' : 'left' }}>{h}</th>)}</tr></thead>
                 <tbody>
                   {trending.map((t, i) => (
-                    <tr key={i} className="border-b border-ln/50 hover:bg-srf">
-                      <td className="px-4 py-2.5 text-white font-medium">{t.search_term}</td>
-                      <td className="px-4 py-2.5 text-right font-mono text-emerald-300">{t.current_rank.toLocaleString()}</td>
-                      <td className="px-4 py-2.5 text-right font-mono text-brand-400">{t.past_rank.toLocaleString()}</td>
-                      <td className="px-4 py-2.5 text-right">
-                        <span className="inline-flex items-center gap-1 text-emerald-400 font-medium">
-                          <ArrowUpRight className="h-3 w-3" />
-                          +{t.rank_improvement.toLocaleString()}
+                    <tr key={i} style={{ transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = C.bg} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <td style={{ ...tdStyle, fontWeight: 600, color: C.ink }}>{t.search_term}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", color: C.sage }}>{t.current_rank.toLocaleString()}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", color: C.stone }}>{t.past_rank.toLocaleString()}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: C.sage, fontWeight: 600, fontSize: 13 }}>
+                          <ArrowUpRight style={{ width: 12, height: 12 }} /> +{t.rank_improvement.toLocaleString()}
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 text-brand-300">{t.brand_1 || '-'}</td>
-                      <td className="px-4 py-2.5 text-brand-400 text-xs">{t.category_1 || '-'}</td>
+                      <td style={{ ...tdStyle, color: C.slate }}>{t.brand_1 || '-'}</td>
+                      <td style={{ ...tdStyle, color: C.stone, fontSize: 11 }}>{t.category_1 || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          ) : (
-            <div className="text-center py-12 text-brand-400">
-              Import at least 2 months of data to see trending terms.
-            </div>
-          )}
+          ) : <div style={{ textAlign: 'center', padding: 40, color: C.sand }}>Import at least 2 months of data to see trending terms.</div>}
         </div>
       )}
 
-      {/* ─── Brands Tab ─── */}
+      {/* Brands */}
       {tab === 'brands' && (
-        <div className="text-center py-12 text-brand-400">
-          <Building2 className="h-10 w-10 mx-auto mb-3 text-brand-500" />
-          <p>Brand analysis will appear after importing Amazon BA data.</p>
-          <p className="text-xs text-brand-500 mt-1">Shows brand concentration, click share dominance, and vulnerability signals.</p>
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <Building2 style={{ width: 36, height: 36, color: C.sand, margin: '0 auto 12px' }} />
+          <p style={{ fontSize: 13, color: C.stone }}>Brand analysis will appear after importing Amazon BA data.</p>
+          <p style={{ fontSize: 11, color: C.sand }}>Shows brand concentration, click share dominance, and vulnerability signals.</p>
         </div>
       )}
     </div>

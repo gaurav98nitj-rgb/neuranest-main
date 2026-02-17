@@ -37,7 +37,6 @@ async def list_topics(
     sort: str = "-opportunity_score",
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    include_explainability: bool = Query(False, description="Include score breakdown and convergence data"),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -45,8 +44,7 @@ async def list_topics(
     redis = await get_redis()
     ck = cache_key("topics_list", category=category, stage=stage, geo=geo,
                    min_score=min_score, max_score=max_score, search=search,
-                   sort=sort, page=page, page_size=page_size,
-                   include_explainability=include_explainability)
+                   sort=sort, page=page, page_size=page_size)
     cached = await get_cached(ck, redis)
     if cached:
         return json.loads(cached)
@@ -71,6 +69,7 @@ async def list_topics(
     sort_desc = sort.startswith("-")
 
     if sort_field == "opportunity_score":
+        # Join with scores to sort
         score_subq = (
             select(Score.topic_id, Score.score_value)
             .where(Score.score_type == "opportunity")
@@ -103,7 +102,7 @@ async def list_topics(
     # Build response items with scores
     items = []
     for topic in topics:
-        # Get latest opportunity score with explanation
+        # Get latest opportunity score
         score_result = await db.execute(
             select(Score)
             .where(and_(Score.topic_id == topic.id, Score.score_type == "opportunity"))
@@ -139,106 +138,18 @@ async def list_topics(
         )
         sources = [r for r in src_result.scalars().all()]
 
-        item = {
-            "id": str(topic.id),
-            "name": topic.name,
-            "slug": topic.slug,
-            "stage": topic.stage,
-            "primary_category": topic.primary_category,
-            "opportunity_score": float(score.score_value) if score else None,
-            "competition_index": float(comp_score.score_value) if comp_score else None,
-            "forecast_direction": getattr(topic, "forecast_direction", None),
-            "sparkline": sparkline if sparkline else None,
-            "sources_active": sources if sources else None,
-        }
-
-        # ─── Enhanced: Score Explainability + Convergence ───
-        if include_explainability and score:
-            explanation = score.explanation_json if score.explanation_json else {}
-            if isinstance(explanation, str):
-                try:
-                    explanation = json.loads(explanation)
-                except (json.JSONDecodeError, TypeError):
-                    explanation = {}
-
-            # Extract score components
-            components = explanation.get("components", {})
-            confidence = explanation.get("confidence", "low")
-
-            # Compute convergence: count active signal sources
-            signal_sources = {
-                "google_trends": "google_trends" in sources,
-                "reddit": "reddit" in sources,
-                "instagram": "instagram" in sources or "facebook" in sources,
-                "tiktok": "tiktok" in sources,
-                "science": "science" in sources or "bioRxiv" in sources,
-            }
-            convergence_active = sum(1 for v in signal_sources.values() if v)
-            convergence_total = len(signal_sources)
-
-            # Compute top drivers from components
-            drivers = []
-            for comp_name, comp_data in components.items():
-                if isinstance(comp_data, dict):
-                    contribution = comp_data.get("contribution", 0)
-                    weight = comp_data.get("weight", 0)
-                    normalized = comp_data.get("normalized", 0)
-                    if contribution > 0:
-                        drivers.append({
-                            "name": comp_name,
-                            "contribution": round(contribution, 1),
-                            "weight": weight,
-                            "normalized": round(normalized, 1),
-                        })
-            drivers.sort(key=lambda x: x["contribution"], reverse=True)
-
-            # Determine archetype based on which signals are strongest
-            archetype = "unknown"
-            if signal_sources.get("science"):
-                archetype = "science-led"
-            elif signal_sources.get("tiktok") or signal_sources.get("instagram"):
-                archetype = "social-led"
-            elif any(d["name"] == "review_gap" and d["contribution"] > 5 for d in drivers):
-                archetype = "problem-led"
-            elif signal_sources.get("google_trends"):
-                archetype = "demand-led"
-
-            # Risk indicators
-            risks = []
-            comp_val = float(comp_score.score_value) if comp_score else 50
-            if comp_val > 70:
-                risks.append({"type": "competition", "level": "high", "detail": f"Competition index: {comp_val:.0f}/100"})
-            if topic.stage == "peaking":
-                risks.append({"type": "lifecycle", "level": "medium", "detail": "Trend may be past peak growth"})
-            if topic.stage == "declining":
-                risks.append({"type": "lifecycle", "level": "high", "detail": "Trend showing decline"})
-
-            # Estimated time-to-peak based on stage
-            time_to_peak = None
-            if topic.stage == "emerging":
-                time_to_peak = "6-12 months"
-            elif topic.stage == "exploding":
-                time_to_peak = "1-3 months"
-            elif topic.stage == "peaking":
-                time_to_peak = "At peak"
-            elif topic.stage == "declining":
-                time_to_peak = "Past peak"
-
-            item["explainability"] = {
-                "confidence": confidence,
-                "archetype": archetype,
-                "convergence": {
-                    "active": convergence_active,
-                    "total": convergence_total,
-                    "signals": signal_sources,
-                },
-                "top_drivers": drivers[:5],
-                "risks": risks,
-                "time_to_peak": time_to_peak,
-                "dampener_applied": explanation.get("dampener_applied", False),
-            }
-
-        items.append(item)
+        items.append(TopicListItem(
+            id=topic.id,
+            name=topic.name,
+            slug=topic.slug,
+            stage=topic.stage,
+            primary_category=topic.primary_category,
+            opportunity_score=float(score.score_value) if score else None,
+            competition_index=float(comp_score.score_value) if comp_score else None,
+            forecast_direction=getattr(topic, "forecast_direction", None),
+            sparkline=sparkline if sparkline else None,
+            sources_active=sources if sources else None,
+        ))
 
     # Free tier limit
     from app.models import Org
@@ -249,21 +160,20 @@ async def list_topics(
             items = items[:25]
 
     total_pages = (total + page_size - 1) // page_size
-    response = {
-        "data": items,
-        "pagination": {
-            "page": page, "page_size": page_size,
-            "total": total, "total_pages": total_pages,
-        },
-    }
+    response = PaginatedResponse(
+        data=items,
+        pagination=PaginationMeta(
+            page=page, page_size=page_size, total=total, total_pages=total_pages
+        ),
+    )
 
     # Cache for 5 minutes
-    await set_cached(ck, json.dumps(response, default=str), 300, redis)
+    await set_cached(ck, json.dumps(response.model_dump(), default=str), 300, redis)
     return response
 
 
 # ─── GET /topics/{id} ───
-@router.get("/{topic_id}")
+@router.get("/{topic_id}", response_model=TopicDetail)
 async def get_topic(
     topic_id: UUID,
     user: User = Depends(get_current_user),
@@ -326,19 +236,17 @@ async def get_timeseries(
     result = await db.execute(query)
     rows = result.scalars().all()
 
-    return TimeseriesResponse(
-        topic_id=topic_id,
-        geo=geo,
-        data=[
-            TimeseriesPoint(
-                date=r.date,
-                source=r.source,
-                raw_value=float(r.raw_value) if r.raw_value else None,
-                normalized_value=float(r.normalized_value) if r.normalized_value else None,
-            )
-            for r in rows
-        ],
-    )
+    data = [
+        TimeseriesPoint(
+            date=r.date,
+            source=r.source,
+            raw_value=float(r.raw_value) if r.raw_value else None,
+            normalized_value=float(r.normalized_value) if r.normalized_value else None,
+        )
+        for r in rows
+    ]
+
+    return TimeseriesResponse(topic_id=topic_id, geo=geo, data=data)
 
 
 # ─── GET /topics/{id}/forecast ───
@@ -348,11 +256,12 @@ async def get_forecast(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # Get latest forecasts
     result = await db.execute(
         select(Forecast)
         .where(Forecast.topic_id == topic_id)
         .order_by(desc(Forecast.generated_at))
-        .limit(20)
+        .limit(20)  # max 6 months * 2 horizons + buffer
     )
     rows = result.scalars().all()
     if not rows:
@@ -386,6 +295,7 @@ async def get_competition(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # Latest snapshot
     snap_result = await db.execute(
         select(AmazonCompetitionSnapshot)
         .where(AmazonCompetitionSnapshot.topic_id == topic_id)
@@ -396,6 +306,7 @@ async def get_competition(
     if not snap:
         raise HTTPException(status_code=404, detail="No competition data available")
 
+    # Get competition score
     score_result = await db.execute(
         select(Score)
         .where(and_(Score.topic_id == topic_id, Score.score_type == "competition"))
@@ -404,6 +315,7 @@ async def get_competition(
     )
     score = score_result.scalar_one_or_none()
 
+    # Top ASINs
     asins_result = await db.execute(
         select(TopicTopAsin, Asin)
         .join(Asin, TopicTopAsin.asin == Asin.asin)
@@ -413,16 +325,21 @@ async def get_competition(
     )
     top_asins = [
         AsinSummary(
-            asin=asin.asin, title=asin.title, brand=asin.brand,
+            asin=asin.asin,
+            title=asin.title,
+            brand=asin.brand,
             price=float(asin.price) if asin.price else None,
             rating=float(asin.rating) if asin.rating else None,
-            review_count=asin.review_count, rank=link.rank,
+            review_count=asin.review_count,
+            rank=link.rank,
         )
         for link, asin in asins_result.all()
     ]
 
     return CompetitionResponse(
-        topic_id=topic_id, date=snap.date, marketplace=snap.marketplace,
+        topic_id=topic_id,
+        date=snap.date,
+        marketplace=snap.marketplace,
         listing_count=snap.listing_count,
         median_price=float(snap.median_price) if snap.median_price else None,
         avg_price=float(snap.avg_price) if snap.avg_price else None,
@@ -445,6 +362,7 @@ async def get_reviews_summary(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # Get all ASINs for this topic
     asins_result = await db.execute(
         select(TopicTopAsin.asin).where(TopicTopAsin.topic_id == topic_id)
     )
@@ -453,14 +371,17 @@ async def get_reviews_summary(
     if not asin_ids:
         raise HTTPException(status_code=404, detail="No review data available")
 
+    # Count reviews
     review_count = await db.execute(
         select(func.count()).select_from(Review).where(Review.asin.in_(asin_ids))
     )
     total_reviews = review_count.scalar()
 
+    # Get all aspects for these ASINs' reviews
     aspects_result = await db.execute(
         select(
-            ReviewAspect.aspect, ReviewAspect.sentiment,
+            ReviewAspect.aspect,
+            ReviewAspect.sentiment,
             func.count().label("cnt"),
             func.min(ReviewAspect.evidence_snippet).label("sample"),
         )
@@ -471,6 +392,7 @@ async def get_reviews_summary(
     )
     aspects_data = aspects_result.all()
 
+    # Aggregate pros and cons
     aspect_totals = {}
     for aspect, sentiment, cnt, sample in aspects_data:
         if aspect not in aspect_totals:
@@ -480,39 +402,58 @@ async def get_reviews_summary(
         aspect_totals[aspect]["sample"][sentiment] = sample
 
     pros = sorted(
-        [AspectSummary(aspect=a, mention_count=d["positive"],
-         sentiment_pct=d["positive"] / d["total"] if d["total"] > 0 else 0,
-         sample=d["sample"].get("positive"))
-         for a, d in aspect_totals.items() if d["positive"] > 0],
+        [
+            AspectSummary(
+                aspect=a,
+                mention_count=d["positive"],
+                sentiment_pct=d["positive"] / d["total"] if d["total"] > 0 else 0,
+                sample=d["sample"].get("positive"),
+            )
+            for a, d in aspect_totals.items() if d["positive"] > 0
+        ],
         key=lambda x: x.mention_count, reverse=True
     )[:5]
 
     cons = sorted(
-        [AspectSummary(aspect=a, mention_count=d["negative"],
-         sentiment_pct=d["negative"] / d["total"] if d["total"] > 0 else 0,
-         sample=d["sample"].get("negative"))
-         for a, d in aspect_totals.items() if d["negative"] > 0],
+        [
+            AspectSummary(
+                aspect=a,
+                mention_count=d["negative"],
+                sentiment_pct=d["negative"] / d["total"] if d["total"] > 0 else 0,
+                sample=d["sample"].get("negative"),
+            )
+            for a, d in aspect_totals.items() if d["negative"] > 0
+        ],
         key=lambda x: x.mention_count, reverse=True
     )[:5]
 
     pain_points = [
-        PainPoint(aspect=c.aspect,
-                  severity=min(c.mention_count / max(total_reviews, 1) * 500, 100),
-                  evidence=f"{c.mention_count} of {total_reviews} reviews mention this issue")
+        PainPoint(
+            aspect=c.aspect,
+            severity=min(c.mention_count / max(total_reviews, 1) * 500, 100),
+            evidence=f"{c.mention_count} of {total_reviews} reviews mention this issue",
+        )
         for c in cons[:5]
     ]
 
+    # Missing features: aspects with high neutral + negative and low positive
     missing = [
-        MissingFeature(feature=a,
-                       demand_signal=f"{d['negative'] + d['neutral']} reviews reference this without satisfaction")
+        MissingFeature(
+            feature=a,
+            demand_signal=f"{d['negative'] + d['neutral']} reviews reference this without satisfaction",
+        )
         for a, d in aspect_totals.items()
         if d["negative"] > d["positive"] and d["total"] >= 5
     ][:5]
 
     return ReviewsSummaryResponse(
-        topic_id=topic_id, total_reviews_analyzed=total_reviews,
-        asins_covered=len(asin_ids), pros=pros, cons=cons,
-        top_pain_points=pain_points, missing_features=missing,
+        topic_id=topic_id,
+        total_reviews_analyzed=total_reviews,
+        asins_covered=len(asin_ids),
+        pros=pros,
+        cons=cons,
+        top_pain_points=pain_points,
+        missing_features=missing,
     )
 
 
@@ -534,8 +475,10 @@ async def get_gen_next_spec(
         raise HTTPException(status_code=404, detail="No Gen-Next spec available")
 
     return GenNextSpecResponse(
-        topic_id=topic_id, version=spec.version,
-        generated_at=spec.generated_at, model_used=spec.model_used,
+        topic_id=topic_id,
+        version=spec.version,
+        generated_at=spec.generated_at,
+        model_used=spec.model_used,
         must_fix=[MustFix(**item) for item in (spec.must_fix_json or [])],
         must_add=[MustAdd(**item) for item in (spec.must_add_json or [])],
         differentiators=[Differentiator(**item) for item in (spec.differentiators_json or [])],

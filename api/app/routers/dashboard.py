@@ -1,5 +1,6 @@
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, func, desc, case, and_
+from sqlalchemy import select, func, desc, case, and_, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -87,6 +88,9 @@ async def get_dashboard(
     total_ts = await db.execute(select(func.count()).select_from(SourceTimeseries))
     data_points = total_ts.scalar()
 
+    # ─── NEW: Daily Intelligence Panel ───
+    daily_intelligence = await _compute_daily_intelligence(db)
+
     return {
         "summary": {
             "total_topics": total_topics,
@@ -97,4 +101,128 @@ async def get_dashboard(
         "categories": categories,
         "top_movers": top_movers,
         "low_competition_opportunities": low_comp,
+        "daily_intelligence": daily_intelligence,
     }
+
+
+async def _compute_daily_intelligence(db: AsyncSession) -> dict:
+    """Compute daily intelligence signals: score jumps, new exploding topics,
+    declining alerts, and category shifts."""
+
+    # Score jumps: topics whose opportunity score increased most vs previous score
+    # Compare latest two scores per topic
+    score_jumps_q = await db.execute(text("""
+        WITH ranked_scores AS (
+            SELECT
+                s.topic_id,
+                s.score_value,
+                s.computed_at,
+                t.name,
+                t.stage,
+                t.primary_category,
+                ROW_NUMBER() OVER (PARTITION BY s.topic_id ORDER BY s.computed_at DESC) as rn
+            FROM scores s
+            JOIN topics t ON t.id = s.topic_id
+            WHERE s.score_type = 'opportunity' AND t.is_active = true
+        ),
+        deltas AS (
+            SELECT
+                r1.topic_id,
+                r1.name,
+                r1.stage,
+                r1.primary_category as category,
+                r1.score_value as current_score,
+                r2.score_value as prev_score,
+                (r1.score_value - r2.score_value) as delta
+            FROM ranked_scores r1
+            JOIN ranked_scores r2 ON r1.topic_id = r2.topic_id AND r2.rn = 2
+            WHERE r1.rn = 1 AND r2.score_value > 0
+        )
+        SELECT topic_id, name, stage, category, current_score, prev_score, delta
+        FROM deltas
+        WHERE ABS(delta) > 3
+        ORDER BY delta DESC
+        LIMIT 10
+    """))
+    score_jumps_rows = score_jumps_q.fetchall()
+
+    rising = []
+    falling = []
+    for r in score_jumps_rows:
+        item = {
+            "id": str(r.topic_id), "name": r.name, "stage": r.stage,
+            "category": r.category,
+            "current_score": round(float(r.current_score), 1),
+            "prev_score": round(float(r.prev_score), 1),
+            "delta": round(float(r.delta), 1),
+        }
+        if r.delta > 0:
+            rising.append(item)
+        else:
+            falling.append(item)
+
+    # Exploding topics (stage = exploding, ordered by opportunity score)
+    exploding_q = await db.execute(
+        select(Topic.id, Topic.name, Topic.primary_category, Score.score_value)
+        .join(Score, and_(Score.topic_id == Topic.id, Score.score_type == "opportunity"))
+        .where(and_(Topic.is_active == True, Topic.stage == "exploding"))
+        .order_by(desc(Score.score_value))
+        .limit(5)
+    )
+    exploding = [
+        {"id": str(r.id), "name": r.name, "category": r.primary_category,
+         "score": round(float(r.score_value), 1) if r.score_value else 0}
+        for r in exploding_q.all()
+    ]
+
+    # Category momentum: average score by category
+    cat_momentum_q = await db.execute(text("""
+        WITH latest_scores AS (
+            SELECT DISTINCT ON (s.topic_id)
+                s.topic_id, s.score_value, t.primary_category
+            FROM scores s
+            JOIN topics t ON t.id = s.topic_id
+            WHERE s.score_type = 'opportunity' AND t.is_active = true
+            ORDER BY s.topic_id, s.computed_at DESC
+        )
+        SELECT primary_category as category,
+               ROUND(AVG(score_value)::numeric, 1) as avg_score,
+               COUNT(*) as topic_count
+        FROM latest_scores
+        WHERE primary_category IS NOT NULL
+        GROUP BY primary_category
+        ORDER BY avg_score DESC
+        LIMIT 8
+    """))
+    category_momentum = [
+        {"category": r.category, "avg_score": float(r.avg_score), "topic_count": r.topic_count}
+        for r in cat_momentum_q.fetchall()
+    ]
+
+    # Opportunity funnel: count by stage
+    funnel = {
+        "signal": stages_count(await db.execute(
+            select(func.count()).where(and_(Topic.is_active == True, Topic.stage == "unknown"))
+        )),
+        "emerging": stages_count(await db.execute(
+            select(func.count()).where(and_(Topic.is_active == True, Topic.stage == "emerging"))
+        )),
+        "exploding": stages_count(await db.execute(
+            select(func.count()).where(and_(Topic.is_active == True, Topic.stage == "exploding"))
+        )),
+        "peaking": stages_count(await db.execute(
+            select(func.count()).where(and_(Topic.is_active == True, Topic.stage == "peaking"))
+        )),
+    }
+
+    return {
+        "rising": rising[:5],
+        "falling": sorted(falling, key=lambda x: x["delta"])[:5],
+        "exploding_topics": exploding,
+        "category_momentum": category_momentum,
+        "funnel": funnel,
+    }
+
+
+def stages_count(result) -> int:
+    return result.scalar() or 0

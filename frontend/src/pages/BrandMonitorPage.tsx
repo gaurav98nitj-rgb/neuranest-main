@@ -2,23 +2,33 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { brandsApi } from '../lib/api'
 import { ArrowLeft, Search, Building2, TrendingUp, TrendingDown, Minus, MessageCircle, ChevronRight } from 'lucide-react'
-import clsx from 'clsx'
+
+const C = {
+  bg: '#F9F7F4', card: '#FFFFFF', border: '#E6E1DA', borderLight: '#F0ECE6',
+  coral: '#E8714A', coralLight: '#FCEEE8', sage: '#1A8754', sageLight: '#E8F5EE',
+  amber: '#D4930D', amberLight: '#FFF8E6', rose: '#C0392B', roseLight: '#FFF0F0',
+  plum: '#7C3AED', charcoal: '#2D3E50', charcoalDeep: '#1A2A3A',
+  ink: '#2A2520', slate: '#5C5549', stone: '#8B8479', sand: '#B8B2A8',
+}
 
 function SentimentBadge({ value }: { value: number | null }) {
-  if (value === null || value === undefined) return <span className="text-xs text-brand-500">—</span>
+  if (value === null || value === undefined) return <span style={{ fontSize: 12, color: C.sand }}>—</span>
   const isPos = value > 0.05
   const isNeg = value < -0.05
+  const color = isPos ? C.sage : isNeg ? C.rose : C.stone
+  const bg = isPos ? C.sageLight : isNeg ? C.roseLight : C.borderLight
+  const Icon = isPos ? TrendingUp : isNeg ? TrendingDown : Minus
   return (
-    <span className={clsx('text-xs font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1',
-      isPos ? 'bg-emerald-900/60 text-emerald-300' : isNeg ? 'bg-red-900/60 text-red-300' : 'bg-brand-800 text-brand-400'
-    )}>
-      {isPos ? <TrendingUp className="h-3 w-3" /> : isNeg ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600,
+      padding: '3px 10px', borderRadius: 12, background: bg, color,
+    }}>
+      <Icon style={{ width: 12, height: 12 }} />
       {(value * 100).toFixed(0)}%
     </span>
   )
 }
 
-// Brand List View
 function BrandListView() {
   const navigate = useNavigate()
   const [brands, setBrands] = useState<any[]>([])
@@ -34,55 +44,63 @@ function BrandListView() {
   }, [search])
 
   return (
-    <div className="p-6 min-h-screen">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Building2 className="h-6 w-6 text-brand-400" /> Brand Monitor
-        </h1>
-        <p className="text-sm text-brand-400 mt-1">{brands.length} brands tracked</p>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif", color: C.ink }}>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <Building2 style={{ width: 22, height: 22, color: C.charcoal }} />
+          <h1 style={{ fontSize: 28, fontWeight: 400, margin: 0, color: C.charcoalDeep, fontFamily: "'Newsreader', Georgia, serif" }}>Brand Monitor</h1>
+        </div>
+        <p style={{ fontSize: 13, color: C.stone, marginLeft: 32 }}>{brands.length} brands tracked</p>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-6 max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-brand-500" />
-        <input type="text" placeholder="Search brands..."
-          value={search} onChange={e => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-srf-1 border border-ln rounded-lg text-sm text-brand-200 placeholder-brand-600 focus:outline-none focus:border-brand-500"
+      <div style={{ position: 'relative', maxWidth: 400, marginBottom: 24 }}>
+        <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: C.sand }} />
+        <input type="text" placeholder="Search brands..." value={search} onChange={e => setSearch(e.target.value)}
+          style={{
+            width: '100%', padding: '10px 14px 10px 38px', borderRadius: 10, border: `1px solid ${C.border}`,
+            background: C.card, fontSize: 13, color: C.ink, outline: 'none',
+          }}
         />
       </div>
 
       {loading ? (
-        <div className="text-brand-400/40">Loading brands...</div>
+        <div style={{ color: C.sand, padding: 20 }}>Loading brands...</div>
       ) : brands.length === 0 ? (
-        <div className="card p-12 text-center">
-          <Building2 className="h-12 w-12 text-brand-600 mx-auto mb-3" />
-          <p className="text-brand-400 text-sm">No brands found. Brands are auto-created when social listening data is ingested.</p>
+        <div style={{ background: C.card, borderRadius: 14, padding: 40, textAlign: 'center', border: `1px solid ${C.border}` }}>
+          <Building2 style={{ width: 40, height: 40, color: C.sand, margin: '0 auto 12px' }} />
+          <p style={{ fontSize: 13, color: C.stone }}>No brands found. Brands are auto-created when social listening data is ingested.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
           {brands.map(brand => (
             <div key={brand.id} onClick={() => navigate(`/brands/${brand.id}`)}
-              className="card p-5 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 transition-all group">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
+              style={{
+                background: C.card, borderRadius: 14, padding: '18px 22px', border: `1px solid ${C.border}`,
+                cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(42,37,32,0.04)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.coral + '60'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = 'translateY(0)' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   {brand.logo_url ? (
-                    <img src={brand.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover bg-srf" />
+                    <img src={brand.logo_url} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', background: C.bg }} />
                   ) : (
-                    <div className="w-10 h-10 rounded-lg bg-brand-800 flex items-center justify-center">
-                      <span className="text-lg font-bold text-brand-400">{brand.name[0]}</span>
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: C.charcoal + '15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: C.charcoal }}>{brand.name[0]}</span>
                     </div>
                   )}
                   <div>
-                    <h3 className="text-sm font-semibold text-brand-200">{brand.name}</h3>
-                    {brand.category_name && <p className="text-xs text-brand-500">{brand.category_name}</p>}
+                    <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.ink }}>{brand.name}</h3>
+                    {brand.category_name && <p style={{ fontSize: 11, color: C.stone, margin: '2px 0 0' }}>{brand.category_name}</p>}
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 text-brand-600 group-hover:text-brand-400 transition-colors" />
+                <ChevronRight style={{ width: 16, height: 16, color: C.sand }} />
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-3.5 w-3.5 text-brand-500" />
-                  <span className="text-xs text-brand-400">{brand.total_mentions} mentions</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <MessageCircle style={{ width: 13, height: 13, color: C.stone }} />
+                  <span style={{ fontSize: 12, color: C.stone }}>{brand.total_mentions} mentions</span>
                 </div>
                 <SentimentBadge value={brand.avg_sentiment} />
               </div>
@@ -94,7 +112,6 @@ function BrandListView() {
   )
 }
 
-// Brand Detail View
 function BrandDetailView() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -104,126 +121,115 @@ function BrandDetailView() {
   useEffect(() => {
     if (!id) return
     setLoading(true)
-    brandsApi.overview(id, { days: 30 })
-      .then(r => setBrand(r.data))
-      .catch(() => null)
-      .finally(() => setLoading(false))
+    brandsApi.overview(id, { days: 30 }).then(r => setBrand(r.data)).catch(() => null).finally(() => setLoading(false))
   }, [id])
 
-  if (loading) return <div className="p-6 text-brand-400/40">Loading brand...</div>
-  if (!brand) return <div className="p-6 text-red-400">Brand not found</div>
+  if (loading) return <div style={{ padding: 24, color: C.sand }}>Loading brand...</div>
+  if (!brand) return <div style={{ padding: 24, color: C.rose }}>Brand not found</div>
 
   return (
-    <div className="p-6 min-h-screen">
-      {/* Header */}
-      <button onClick={() => navigate('/brands')} className="flex items-center gap-1 text-sm text-brand-400/60 hover:text-brand-300 mb-3 transition-colors">
-        <ArrowLeft className="h-4 w-4" /> Back to Brands
+    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif", color: C.ink }}>
+      <button onClick={() => navigate('/brands')} style={{
+        display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: C.stone,
+        background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 16,
+      }}>
+        <ArrowLeft style={{ width: 14, height: 14 }} /> Back to Brands
       </button>
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-14 h-14 rounded-xl bg-brand-800 flex items-center justify-center">
-          <span className="text-2xl font-bold text-brand-400">{brand.name[0]}</span>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+        <div style={{ width: 52, height: 52, borderRadius: 12, background: C.charcoal + '15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ fontSize: 22, fontWeight: 700, color: C.charcoal }}>{brand.name[0]}</span>
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">{brand.name}</h1>
-          <p className="text-sm text-brand-400">
+          <h1 style={{ fontSize: 28, fontWeight: 400, margin: 0, color: C.charcoalDeep, fontFamily: "'Newsreader', Georgia, serif" }}>{brand.name}</h1>
+          <p style={{ fontSize: 13, color: C.stone, margin: '4px 0 0' }}>
             {brand.category_name || 'Uncategorized'}
-            {brand.website && <> · <a href={brand.website} target="_blank" rel="noreferrer" className="text-brand-500 hover:text-brand-300">{brand.website}</a></>}
+            {brand.website && <> · <a href={brand.website} target="_blank" rel="noreferrer" style={{ color: C.coral }}>{brand.website}</a></>}
           </p>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="card p-4">
-          <p className="text-xs text-brand-500 uppercase mb-1">Total Mentions</p>
-          <p className="text-2xl font-bold text-white">{brand.total_mentions}</p>
-        </div>
-        <div className="card p-4">
-          <p className="text-xs text-brand-500 uppercase mb-1">Avg Sentiment</p>
-          <div className="mt-1"><SentimentBadge value={brand.avg_sentiment} /></div>
-        </div>
-        <div className="card p-4">
-          <p className="text-xs text-brand-500 uppercase mb-1">Share of Voice</p>
-          <p className="text-2xl font-bold text-brand-200">{brand.share_of_voice ? `${(brand.share_of_voice * 100).toFixed(1)}%` : '—'}</p>
-        </div>
-        <div className="card p-4">
-          <p className="text-xs text-brand-500 uppercase mb-1">Complaints</p>
-          <p className="text-2xl font-bold text-red-400">{brand.top_complaints?.length || 0}</p>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
+        {[
+          { label: 'Total Mentions', value: brand.total_mentions, color: C.charcoal },
+          { label: 'Avg Sentiment', value: null, color: C.sage, custom: <SentimentBadge value={brand.avg_sentiment} /> },
+          { label: 'Share of Voice', value: brand.share_of_voice ? `${(brand.share_of_voice * 100).toFixed(1)}%` : '—', color: C.plum },
+          { label: 'Complaints', value: brand.top_complaints?.length || 0, color: C.rose },
+        ].map(m => (
+          <div key={m.label} style={{ background: C.card, borderRadius: 12, padding: '16px 20px', border: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em', marginBottom: 4 }}>{m.label}</div>
+            {m.custom || <div style={{ fontSize: 24, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono', monospace" }}>{m.value}</div>}
+          </div>
+        ))}
       </div>
 
       {/* Sentiment Trend */}
-      {brand.sentiment_trend && brand.sentiment_trend.length > 0 && (
-        <div className="card p-5 mb-6">
-          <h3 className="text-sm font-semibold text-brand-300 uppercase mb-4">Sentiment Trend (30d)</h3>
-          <div className="flex items-end gap-0.5 h-24">
+      {brand.sentiment_trend?.length > 0 && (
+        <div style={{ background: C.card, borderRadius: 14, padding: 24, border: `1px solid ${C.border}`, marginBottom: 20 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: C.charcoalDeep, marginBottom: 14 }}>Sentiment Trend (30d)</h3>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 80 }}>
             {brand.sentiment_trend.map((d: any, i: number) => {
               const val = d.avg_sentiment ?? 0
               const height = Math.abs(val) * 100
-              const isPos = val > 0
               return (
-                <div key={i} className="flex-1 flex flex-col items-center justify-end h-full" title={`${d.date}: ${(val * 100).toFixed(0)}%`}>
-                  <div className={clsx('w-full rounded-t', isPos ? 'bg-emerald-500/60' : 'bg-red-500/60')}
-                    style={{ height: `${Math.max(height, 2)}%`, minHeight: '2px' }} />
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }} title={`${d.date}: ${(val * 100).toFixed(0)}%`}>
+                  <div style={{ width: '100%', borderRadius: '2px 2px 0 0', background: val > 0 ? C.sage + '70' : C.rose + '70', height: `${Math.max(height, 3)}%`, minHeight: 2 }} />
                 </div>
               )
             })}
           </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-[10px] text-brand-600">{brand.sentiment_trend[0]?.date}</span>
-            <span className="text-[10px] text-brand-600">{brand.sentiment_trend[brand.sentiment_trend.length - 1]?.date}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+            <span style={{ fontSize: 10, color: C.sand }}>{brand.sentiment_trend[0]?.date}</span>
+            <span style={{ fontSize: 10, color: C.sand }}>{brand.sentiment_trend[brand.sentiment_trend.length - 1]?.date}</span>
           </div>
         </div>
       )}
 
       {/* Top Complaints */}
-      {brand.top_complaints && brand.top_complaints.length > 0 && (
-        <div className="card p-5 mb-6">
-          <h3 className="text-sm font-semibold text-brand-300 uppercase mb-4 flex items-center gap-2">
-            <MessageCircle className="h-4 w-4 text-red-400" /> Top Complaints
+      {brand.top_complaints?.length > 0 && (
+        <div style={{ background: C.card, borderRadius: 14, padding: 24, border: `1px solid ${C.border}`, marginBottom: 20 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: C.charcoalDeep, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <MessageCircle style={{ width: 14, height: 14, color: C.rose }} /> Top Complaints
           </h3>
-          <div className="space-y-3">
-            {brand.top_complaints.map((c: any, i: number) => (
-              <div key={i} className="p-3 rounded-lg bg-srf border-l-2 border-red-500/50">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] text-brand-500 uppercase">{c.source}</span>
-                  <span className="text-[10px] text-brand-600">{c.date}</span>
-                </div>
-                <p className="text-sm text-brand-300">{c.text}</p>
+          {brand.top_complaints.map((c: any, i: number) => (
+            <div key={i} style={{ padding: '10px 14px', borderRadius: 10, marginBottom: 6, background: C.roseLight, borderLeft: `3px solid ${C.rose}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase' }}>{c.source}</span>
+                <span style={{ fontSize: 10, color: C.sand }}>{c.date}</span>
               </div>
-            ))}
-          </div>
+              <p style={{ fontSize: 13, color: C.slate, margin: 0 }}>{c.text}</p>
+            </div>
+          ))}
         </div>
       )}
 
       {/* Recent Mentions */}
-      {brand.recent_mentions && brand.recent_mentions.length > 0 && (
-        <div className="card p-5">
-          <h3 className="text-sm font-semibold text-brand-300 uppercase mb-4">Recent Mentions</h3>
-          <div className="space-y-3">
-            {brand.recent_mentions.map((m: any, i: number) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-srf">
-                <div className={clsx('w-2 h-2 rounded-full mt-1.5 flex-shrink-0',
-                  m.sentiment === 'positive' ? 'bg-emerald-400' : m.sentiment === 'negative' ? 'bg-red-400' : 'bg-brand-500'
-                )} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-brand-300">{m.text}</p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[10px] text-brand-500 uppercase">{m.source}</span>
-                    <span className="text-[10px] text-brand-600">{m.date}</span>
-                    {m.engagement > 0 && <span className="text-[10px] text-brand-500">♥ {m.engagement}</span>}
-                  </div>
+      {brand.recent_mentions?.length > 0 && (
+        <div style={{ background: C.card, borderRadius: 14, padding: 24, border: `1px solid ${C.border}` }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: C.charcoalDeep, marginBottom: 14 }}>Recent Mentions</h3>
+          {brand.recent_mentions.map((m: any, i: number) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px', borderRadius: 10, marginBottom: 4, background: C.bg }}>
+              <div style={{
+                width: 8, height: 8, borderRadius: '50%', marginTop: 5, flexShrink: 0,
+                background: m.sentiment === 'positive' ? C.sage : m.sentiment === 'negative' ? C.rose : C.stone,
+              }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 13, color: C.slate, margin: 0 }}>{m.text}</p>
+                <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                  <span style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase' }}>{m.source}</span>
+                  <span style={{ fontSize: 10, color: C.sand }}>{m.date}</span>
+                  {m.engagement > 0 && <span style={{ fontSize: 10, color: C.stone }}>♥ {m.engagement}</span>}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
   )
 }
 
-// Router wrapper
 export default function BrandMonitorPage() {
   const { id } = useParams<{ id: string }>()
   return id ? <BrandDetailView /> : <BrandListView />

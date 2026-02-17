@@ -2,57 +2,23 @@ import { useState, useEffect, useCallback } from 'react'
 import { whitespaceApi, categoriesApi } from '../lib/api'
 import { Map, TrendingUp, AlertTriangle, Lightbulb, ChevronRight, X, Package, DollarSign, Users, Flame } from 'lucide-react'
 
-interface HeatmapCell {
-  price_bucket: string
-  price_min: number
-  price_max: number
-  competition_bucket: string
-  competition_min: number
-  competition_max: number
-  topic_count: number
-  avg_dissatisfaction: number
-  avg_opportunity_score: number
-  avg_competition_index: number
-  white_space_score: number
-  intensity: number
+const C = {
+  bg: '#F9F7F4', card: '#FFFFFF', border: '#E6E1DA', borderLight: '#F0ECE6',
+  coral: '#E8714A', coralLight: '#FCEEE8', sage: '#1A8754', sageLight: '#E8F5EE',
+  amber: '#D4930D', amberLight: '#FFF8E6', rose: '#C0392B', roseLight: '#FFF0F0',
+  plum: '#7C3AED', plumLight: '#F3EEFF', charcoal: '#2D3E50', charcoalDeep: '#1A2A3A',
+  ink: '#2A2520', slate: '#5C5549', stone: '#8B8479', sand: '#B8B2A8',
 }
 
-interface CellTopic {
-  id: string
-  name: string
-  slug: string
-  stage: string
-  primary_category: string | null
-  opportunity_score: number | null
-  competition_index: number | null
-  dissatisfaction_pct: number | null
-  median_price: number | null
-  feature_requests: string[]
-  top_complaints: string[]
+const STAGE: Record<string, { bg: string; text: string }> = {
+  emerging: { bg: C.sageLight, text: C.sage }, exploding: { bg: C.coralLight, text: C.coral },
+  peaking: { bg: C.amberLight, text: C.amber }, declining: { bg: C.roseLight, text: C.rose },
 }
 
-interface ProductConcept {
-  title: string
-  description: string
-  target_price: string
-  key_differentiators: string[]
-  unmet_needs: string[]
-}
-
-interface CellDrillDown {
-  price_bucket: string
-  competition_bucket: string
-  topics: CellTopic[]
-  product_concepts: ProductConcept[]
-  summary: string
-}
-
-const stageBadge: Record<string, string> = {
-  emerging: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-  exploding: 'bg-orange-500/20 text-orange-300 border border-orange-500/30',
-  peaking: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
-  declining: 'bg-red-500/20 text-red-300 border border-red-500/30',
-}
+interface HeatmapCell { price_bucket: string; price_min: number; price_max: number; competition_bucket: string; competition_min: number; competition_max: number; topic_count: number; avg_dissatisfaction: number; avg_opportunity_score: number; avg_competition_index: number; white_space_score: number; intensity: number }
+interface CellTopic { id: string; name: string; slug: string; stage: string; primary_category: string | null; opportunity_score: number | null; competition_index: number | null; dissatisfaction_pct: number | null; median_price: number | null; feature_requests: string[]; top_complaints: string[] }
+interface ProductConcept { title: string; description: string; target_price: string; key_differentiators: string[]; unmet_needs: string[] }
+interface CellDrillDown { price_bucket: string; competition_bucket: string; topics: CellTopic[]; product_concepts: ProductConcept[]; summary: string }
 
 export default function WhiteSpacePage() {
   const [cells, setCells] = useState<HeatmapCell[]>([])
@@ -60,227 +26,149 @@ export default function WhiteSpacePage() {
   const [compBuckets, setCompBuckets] = useState<string[]>([])
   const [totalTopics, setTotalTopics] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [categoryFilter, setCategoryFilter] = useState<string>('')
+  const [categoryFilter, setCategoryFilter] = useState('')
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
   const [selectedCell, setSelectedCell] = useState<{ price: string; comp: string } | null>(null)
   const [drillDown, setDrillDown] = useState<CellDrillDown | null>(null)
   const [drillLoading, setDrillLoading] = useState(false)
 
-  // Load categories for filter
-  useEffect(() => {
-    categoriesApi.list().then((res) => {
-      setCategories(res.data || [])
-    }).catch(() => {})
-  }, [])
+  useEffect(() => { categoriesApi.list().then(r => setCategories(r.data || [])).catch(() => {}) }, [])
 
-  // Load heatmap data
   const loadHeatmap = useCallback(async () => {
     setLoading(true)
     try {
-      const params: Record<string, any> = {}
-      if (categoryFilter) params.category = categoryFilter
+      const params: Record<string, any> = {}; if (categoryFilter) params.category = categoryFilter
       const res = await whitespaceApi.heatmap(params)
-      setCells(res.data.cells || [])
-      setPriceBuckets(res.data.price_buckets || [])
-      setCompBuckets(res.data.competition_buckets || [])
-      setTotalTopics(res.data.total_topics || 0)
-    } catch {
-      setCells([])
-    } finally {
-      setLoading(false)
-    }
+      setCells(res.data.cells || []); setPriceBuckets(res.data.price_buckets || []); setCompBuckets(res.data.competition_buckets || []); setTotalTopics(res.data.total_topics || 0)
+    } catch { setCells([]) }
+    setLoading(false)
   }, [categoryFilter])
 
-  useEffect(() => {
-    loadHeatmap()
-  }, [loadHeatmap])
+  useEffect(() => { loadHeatmap() }, [loadHeatmap])
 
-  // Load cell drill-down
   const openCell = async (priceB: string, compB: string) => {
-    setSelectedCell({ price: priceB, comp: compB })
-    setDrillLoading(true)
+    setSelectedCell({ price: priceB, comp: compB }); setDrillLoading(true)
     try {
-      const params: Record<string, any> = {
-        price_bucket: priceB,
-        competition_bucket: compB,
-      }
-      if (categoryFilter) params.category = categoryFilter
-      const res = await whitespaceApi.cell(params)
-      setDrillDown(res.data)
-    } catch {
-      setDrillDown(null)
-    } finally {
-      setDrillLoading(false)
-    }
+      const params: Record<string, any> = { price_bucket: priceB, competition_bucket: compB }; if (categoryFilter) params.category = categoryFilter
+      const res = await whitespaceApi.cell(params); setDrillDown(res.data)
+    } catch { setDrillDown(null) }
+    setDrillLoading(false)
   }
 
-  const closeDrawer = () => {
-    setSelectedCell(null)
-    setDrillDown(null)
+  const closeDrawer = () => { setSelectedCell(null); setDrillDown(null) }
+  const getCell = (price: string, comp: string) => cells.find(c => c.price_bucket === price && c.competition_bucket === comp)
+
+  const cellBg = (intensity: number, count: number) => {
+    if (count === 0) return { bg: C.borderLight, border: 'transparent' }
+    if (intensity > 0.75) return { bg: C.sage + '25', border: C.sage + '40' }
+    if (intensity > 0.5) return { bg: C.sage + '15', border: C.sage + '20' }
+    if (intensity > 0.25) return { bg: C.amber + '15', border: C.amber + '20' }
+    return { bg: C.borderLight, border: C.border }
   }
 
-  // Get cell data
-  const getCell = (price: string, comp: string) =>
-    cells.find((c) => c.price_bucket === price && c.competition_bucket === comp)
-
-  // Heatmap color: intensity 0-1 → green (white-space) to gray (no opportunity)
-  const cellColor = (intensity: number, count: number) => {
-    if (count === 0) return 'bg-brand-900/30'
-    if (intensity > 0.75) return 'bg-emerald-500/40 hover:bg-emerald-500/50 border-emerald-500/40'
-    if (intensity > 0.5) return 'bg-emerald-600/30 hover:bg-emerald-600/40 border-emerald-500/25'
-    if (intensity > 0.25) return 'bg-amber-600/25 hover:bg-amber-600/35 border-amber-500/20'
-    return 'bg-brand-800/40 hover:bg-brand-800/50 border-brand-700/30'
-  }
-
-  // Summary stats
-  const hotCells = cells.filter((c) => c.intensity > 0.6 && c.topic_count > 0)
-  const avgDissatisfaction = cells.length > 0
-    ? cells.reduce((s, c) => s + c.avg_dissatisfaction, 0) / cells.filter(c => c.topic_count > 0).length || 0
-    : 0
+  const hotCells = cells.filter(c => c.intensity > 0.6 && c.topic_count > 0)
+  const avgDissatisfaction = cells.filter(c => c.topic_count > 0).length > 0
+    ? cells.filter(c => c.topic_count > 0).reduce((s, c) => s + c.avg_dissatisfaction, 0) / cells.filter(c => c.topic_count > 0).length : 0
   const bestCell = cells.reduce((best, c) => (c.white_space_score > (best?.white_space_score || 0) ? c : best), cells[0])
 
   return (
-    <div className="min-h-screen bg-srf p-6">
+    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif", color: C.ink }}>
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <Map className="h-7 w-7 text-emerald-400" />
-          <h1 className="text-2xl font-bold text-white">White-Space Detection</h1>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <Map style={{ width: 22, height: 22, color: C.sage }} />
+          <h1 style={{ fontSize: 28, fontWeight: 400, margin: 0, color: C.charcoalDeep, fontFamily: "'Newsreader', Georgia, serif" }}>White-Space Detection</h1>
         </div>
-        <p className="text-brand-300 text-sm ml-10">
-          Identify market gaps where demand exists but supply is weak, quality is poor, or prices are misaligned.
-        </p>
+        <p style={{ fontSize: 13, color: C.stone, marginLeft: 32 }}>Identify market gaps where demand exists but supply is weak, quality is poor, or prices are misaligned.</p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-srf-1 rounded-xl p-4 border border-ln">
-          <div className="flex items-center gap-2 text-brand-400 text-xs mb-2">
-            <Package className="h-4 w-4" />
-            Topics Analyzed
+      {/* KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
+        {[
+          { icon: <Package style={{ width: 14, height: 14, color: C.charcoal }} />, label: 'Topics Analyzed', value: totalTopics, color: C.charcoal },
+          { icon: <Flame style={{ width: 14, height: 14, color: C.sage }} />, label: 'Hot Zones', value: hotCells.length, sub: 'high opportunity cells', color: C.sage },
+          { icon: <AlertTriangle style={{ width: 14, height: 14, color: C.amber }} />, label: 'Avg Dissatisfaction', value: `${avgDissatisfaction.toFixed(0)}%`, sub: 'negative review rate', color: C.amber },
+          { icon: <TrendingUp style={{ width: 14, height: 14, color: C.coral }} />, label: 'Best Zone', value: bestCell ? `${bestCell.white_space_score.toFixed(0)}` : '—', sub: bestCell ? `${bestCell.price_bucket} / ${bestCell.competition_bucket}` : '', color: C.coral },
+        ].map(m => (
+          <div key={m.label} style={{ background: C.card, borderRadius: 12, padding: '16px 20px', border: `1px solid ${C.border}`, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: -16, right: -16, width: 60, height: 60, borderRadius: '50%', background: m.color, opacity: 0.08 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>{m.icon}<span style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase', fontWeight: 600 }}>{m.label}</span></div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: C.ink, fontFamily: "'JetBrains Mono', monospace" }}>{m.value}</div>
+            {m.sub && <div style={{ fontSize: 10, color: C.sand, marginTop: 2 }}>{m.sub}</div>}
           </div>
-          <p className="text-2xl font-bold text-white">{totalTopics}</p>
-        </div>
-        <div className="bg-srf-1 rounded-xl p-4 border border-ln">
-          <div className="flex items-center gap-2 text-emerald-400 text-xs mb-2">
-            <Flame className="h-4 w-4" />
-            Hot Zones
-          </div>
-          <p className="text-2xl font-bold text-emerald-300">{hotCells.length}</p>
-          <p className="text-brand-500 text-xs">high opportunity cells</p>
-        </div>
-        <div className="bg-srf-1 rounded-xl p-4 border border-ln">
-          <div className="flex items-center gap-2 text-amber-400 text-xs mb-2">
-            <AlertTriangle className="h-4 w-4" />
-            Avg Dissatisfaction
-          </div>
-          <p className="text-2xl font-bold text-amber-300">{avgDissatisfaction.toFixed(0)}%</p>
-          <p className="text-brand-500 text-xs">negative review rate</p>
-        </div>
-        <div className="bg-srf-1 rounded-xl p-4 border border-ln">
-          <div className="flex items-center gap-2 text-blue-400 text-xs mb-2">
-            <TrendingUp className="h-4 w-4" />
-            Best Zone
-          </div>
-          <p className="text-lg font-bold text-blue-300 truncate">
-            {bestCell ? `${bestCell.price_bucket} / ${bestCell.competition_bucket}` : '-'}
-          </p>
-          <p className="text-brand-500 text-xs">
-            {bestCell ? `score: ${bestCell.white_space_score.toFixed(0)}` : ''}
-          </p>
-        </div>
+        ))}
       </div>
 
       {/* Category Filter */}
-      <div className="flex items-center gap-3 mb-6">
-        <label className="text-sm text-brand-300">Filter by category:</label>
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="bg-srf-1 border border-ln rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-        >
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: C.stone }}>Filter by category:</label>
+        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{
+          padding: '8px 14px', borderRadius: 8, border: `1px solid ${C.border}`, background: C.card,
+          fontSize: 13, color: C.ink, outline: 'none', cursor: 'pointer',
+        }}>
           <option value="">All Categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.name}>{c.name}</option>
-          ))}
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </div>
 
-      {/* Heatmap Grid */}
+      {/* Heatmap */}
       {loading ? (
-        <div className="bg-srf-1 rounded-xl border border-ln p-16 text-center">
-          <div className="animate-pulse text-brand-400">Loading white-space analysis...</div>
+        <div style={{ padding: 40, textAlign: 'center', color: C.sand }}>Loading heatmap...</div>
+      ) : cells.length === 0 ? (
+        <div style={{ background: C.card, borderRadius: 14, padding: 40, textAlign: 'center', border: `1px solid ${C.border}` }}>
+          <Package style={{ width: 40, height: 40, color: C.sand, margin: '0 auto 12px' }} />
+          <p style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>No heatmap data yet</p>
+          <p style={{ fontSize: 12, color: C.stone }}>Run the white-space analysis pipeline to generate the opportunity heatmap.</p>
         </div>
       ) : (
-        <div className="bg-srf-1 rounded-xl border border-ln p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Market Opportunity Heatmap</h2>
-            <div className="flex items-center gap-4 text-xs text-brand-400">
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-brand-800/40 border border-brand-700/30" />
-                Low opportunity
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-amber-600/25 border border-amber-500/20" />
-                Moderate
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-emerald-500/40 border border-emerald-500/40" />
-                High white-space
-              </span>
+        <div style={{ background: C.card, borderRadius: 14, padding: 24, border: `1px solid ${C.border}`, marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: C.charcoalDeep, margin: 0 }}>Opportunity Heatmap</h3>
+            <div style={{ display: 'flex', gap: 12, fontSize: 10, color: C.stone }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: C.sage + '35' }} /> High opportunity</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: C.amber + '25' }} /> Moderate</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: C.borderLight }} /> Low/Empty</span>
             </div>
           </div>
-
-          {/* Grid */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 4 }}>
               <thead>
                 <tr>
-                  <th className="text-left text-xs text-brand-400 font-medium pb-2 pr-3 w-28">
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="h-3 w-3" />
-                      Price ↓ / Comp →
-                    </div>
-                  </th>
-                  {compBuckets.map((cb) => (
-                    <th key={cb} className="text-center text-xs text-brand-400 font-medium pb-2 px-2">
-                      <div className="flex items-center justify-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {cb}
-                      </div>
+                  <th style={{ width: 100 }} />
+                  {compBuckets.map(cb => (
+                    <th key={cb} style={{ fontSize: 10, fontWeight: 600, color: C.stone, textTransform: 'uppercase', padding: '6px 4px', textAlign: 'center' }}>
+                      {cb}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {priceBuckets.map((pb) => (
+                {priceBuckets.map(pb => (
                   <tr key={pb}>
-                    <td className="text-sm font-medium text-brand-200 py-1 pr-3">{pb}</td>
-                    {compBuckets.map((cb) => {
+                    <td style={{ fontSize: 10, fontWeight: 600, color: C.stone, paddingRight: 8, textAlign: 'right' }}>{pb}</td>
+                    {compBuckets.map(cb => {
                       const cell = getCell(pb, cb)
-                      const intensity = cell?.intensity || 0
                       const count = cell?.topic_count || 0
+                      const intensity = cell?.intensity || 0
+                      const colors = cellBg(intensity, count)
                       return (
-                        <td key={cb} className="p-1">
-                          <button
-                            onClick={() => count > 0 && openCell(pb, cb)}
-                            className={`w-full rounded-lg border p-4 transition-all ${cellColor(intensity, count)} ${count > 0 ? 'cursor-pointer' : 'cursor-default opacity-50'}`}
-                          >
-                            <div className="text-center">
-                              <p className="text-xl font-bold text-white">
-                                {count > 0 ? cell?.white_space_score.toFixed(0) : '-'}
-                              </p>
-                              <p className="text-xs text-brand-300 mt-1">
-                                {count} {count === 1 ? 'topic' : 'topics'}
-                              </p>
-                              {count > 0 && (
-                                <div className="flex items-center justify-center gap-2 mt-2 text-xs">
-                                  <span className="text-amber-400">{cell?.avg_dissatisfaction.toFixed(0)}% pain</span>
-                                  <span className="text-brand-500">·</span>
-                                  <span className="text-emerald-400">{cell?.avg_opportunity_score.toFixed(0)} opp</span>
-                                </div>
-                              )}
-                            </div>
+                        <td key={cb}>
+                          <button onClick={() => count > 0 && openCell(pb, cb)} disabled={count === 0} style={{
+                            width: '100%', minHeight: 80, borderRadius: 10, border: `1px solid ${colors.border}`,
+                            background: colors.bg, cursor: count > 0 ? 'pointer' : 'default',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            padding: 8, transition: 'all 0.15s',
+                          }}>
+                            <span style={{ fontSize: 18, fontWeight: 700, color: count > 0 ? C.ink : C.sand, fontFamily: "'JetBrains Mono', monospace" }}>
+                              {count > 0 ? (intensity * 100).toFixed(0) : '—'}
+                            </span>
+                            <span style={{ fontSize: 10, color: C.stone, marginTop: 2 }}>{count} {count === 1 ? 'topic' : 'topics'}</span>
+                            {count > 0 && (
+                              <div style={{ display: 'flex', gap: 6, marginTop: 4, fontSize: 10 }}>
+                                <span style={{ color: C.amber }}>{cell?.avg_dissatisfaction.toFixed(0)}% pain</span>
+                                <span style={{ color: C.sage }}>{cell?.avg_opportunity_score.toFixed(0)} opp</span>
+                              </div>
+                            )}
                           </button>
                         </td>
                       )
@@ -290,163 +178,105 @@ export default function WhiteSpacePage() {
               </tbody>
             </table>
           </div>
-
-          <p className="text-xs text-brand-500 mt-4">
-            Click any cell to see topics, pain points, and AI-generated product concepts for that zone.
-          </p>
+          <p style={{ fontSize: 11, color: C.stone, marginTop: 12 }}>Click any cell to see topics, pain points, and AI-generated product concepts for that zone.</p>
         </div>
       )}
 
       {/* How to Read */}
-      <div className="mt-6 bg-srf-1 rounded-xl border border-ln p-6">
-        <h3 className="text-sm font-semibold text-brand-200 mb-3 flex items-center gap-2">
-          <Lightbulb className="h-4 w-4 text-amber-400" />
-          How to Read This Map
+      <div style={{ background: C.card, borderRadius: 14, padding: 24, border: `1px solid ${C.border}`, marginTop: 16 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, color: C.charcoalDeep, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Lightbulb style={{ width: 14, height: 14, color: C.amber }} /> How to Read This Map
         </h3>
-        <div className="grid grid-cols-3 gap-4 text-sm text-brand-300">
-          <div>
-            <p className="font-medium text-emerald-300 mb-1">Green (High Score)</p>
-            <p>Strong white-space: high demand + low competition + high customer pain. Best zones for new product launches.</p>
-          </div>
-          <div>
-            <p className="font-medium text-amber-300 mb-1">Amber (Moderate)</p>
-            <p>Some opportunity exists but either competition is moderate or customer satisfaction is decent. Needs differentiation.</p>
-          </div>
-          <div>
-            <p className="font-medium text-brand-400 mb-1">Gray (Low Score)</p>
-            <p>Saturated or well-served market. Existing products meet customer needs at current prices. Higher barrier to entry.</p>
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, fontSize: 12, color: C.slate }}>
+          <div><p style={{ fontWeight: 600, color: C.sage, marginBottom: 4 }}>Green (High Score)</p><p style={{ margin: 0 }}>Strong white-space: high demand + low competition + high customer pain. Best zones for new product launches.</p></div>
+          <div><p style={{ fontWeight: 600, color: C.amber, marginBottom: 4 }}>Amber (Moderate)</p><p style={{ margin: 0 }}>Some opportunity exists but either competition is moderate or customer satisfaction is decent. Needs differentiation.</p></div>
+          <div><p style={{ fontWeight: 600, color: C.stone, marginBottom: 4 }}>Gray (Low Score)</p><p style={{ margin: 0 }}>Saturated or well-served market. Existing products meet customer needs at current prices. Higher barrier to entry.</p></div>
         </div>
       </div>
 
-      {/* Slide-over Drawer */}
+      {/* Drawer */}
       {selectedCell && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="absolute inset-0 bg-black/50" onClick={closeDrawer} />
-          <div className="relative w-full max-w-xl bg-srf-1 border-l border-ln overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-srf-1 border-b border-ln p-4 flex items-center justify-between z-10">
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} onClick={closeDrawer} />
+          <div style={{ position: 'relative', width: '100%', maxWidth: 540, background: C.card, borderLeft: `1px solid ${C.border}`, overflowY: 'auto', boxShadow: '-4px 0 20px rgba(0,0,0,0.08)' }}>
+            <div style={{ position: 'sticky', top: 0, background: C.card, borderBottom: `1px solid ${C.border}`, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
               <div>
-                <h2 className="text-lg font-bold text-white">
-                  {selectedCell.price} / {selectedCell.comp} Competition
-                </h2>
-                <p className="text-sm text-brand-400">Zone drill-down</p>
+                <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: C.charcoalDeep }}>{selectedCell.price} / {selectedCell.comp} Competition</h2>
+                <p style={{ fontSize: 12, color: C.stone, margin: '2px 0 0' }}>Zone drill-down</p>
               </div>
-              <button onClick={closeDrawer} className="p-2 text-brand-400 hover:text-white transition-colors">
-                <X className="h-5 w-5" />
-              </button>
+              <button onClick={closeDrawer} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: C.stone }}><X style={{ width: 18, height: 18 }} /></button>
             </div>
 
             {drillLoading ? (
-              <div className="p-8 text-center text-brand-400 animate-pulse">Loading analysis...</div>
+              <div style={{ padding: 32, textAlign: 'center', color: C.sand }}>Loading analysis...</div>
             ) : drillDown ? (
-              <div className="p-4 space-y-6">
-                {/* Summary */}
-                <div className="bg-srf rounded-lg p-4 border border-ln">
-                  <p className="text-sm text-brand-200 leading-relaxed">{drillDown.summary}</p>
+              <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div style={{ background: C.bg, borderRadius: 10, padding: 14, border: `1px solid ${C.borderLight}` }}>
+                  <p style={{ fontSize: 13, color: C.slate, lineHeight: 1.6, margin: 0 }}>{drillDown.summary}</p>
                 </div>
 
-                {/* Product Concepts */}
                 {drillDown.product_concepts.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-emerald-300 mb-3 flex items-center gap-2">
-                      <Lightbulb className="h-4 w-4" />
-                      Product Concepts
-                    </h3>
-                    <div className="space-y-3">
-                      {drillDown.product_concepts.map((concept, i) => (
-                        <div key={i} className="bg-srf rounded-lg p-4 border border-emerald-500/20">
-                          <h4 className="text-sm font-semibold text-white mb-1">{concept.title}</h4>
-                          <p className="text-xs text-brand-300 mb-3">{concept.description}</p>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">
-                              Target: {concept.target_price}
-                            </span>
+                    <h3 style={{ fontSize: 13, fontWeight: 600, color: C.sage, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}><Lightbulb style={{ width: 14, height: 14 }} /> Product Concepts</h3>
+                    {drillDown.product_concepts.map((concept, i) => (
+                      <div key={i} style={{ background: C.sageLight, borderRadius: 10, padding: '14px 16px', marginBottom: 8, border: `1px solid ${C.sage}20` }}>
+                        <h4 style={{ fontSize: 13, fontWeight: 600, color: C.ink, margin: '0 0 4px' }}>{concept.title}</h4>
+                        <p style={{ fontSize: 11, color: C.slate, margin: '0 0 8px' }}>{concept.description}</p>
+                        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, background: C.sage + '20', color: C.sage, fontWeight: 600 }}>Target: {concept.target_price}</span>
+                        {concept.key_differentiators.length > 0 && (
+                          <div style={{ marginTop: 8 }}>
+                            <p style={{ fontSize: 10, color: C.stone, marginBottom: 4 }}>Differentiators:</p>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                              {concept.key_differentiators.map((d, j) => <span key={j} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, background: C.borderLight, color: C.ink }}>{d}</span>)}
+                            </div>
                           </div>
-                          {concept.key_differentiators.length > 0 && (
-                            <div className="mt-2">
-                              <p className="text-xs text-brand-400 mb-1">Differentiators:</p>
-                              <div className="flex flex-wrap gap-1">
-                                {concept.key_differentiators.map((d, j) => (
-                                  <span key={j} className="text-xs bg-brand-800 text-brand-200 px-2 py-0.5 rounded">
-                                    {d}
-                                  </span>
-                                ))}
-                              </div>
+                        )}
+                        {concept.unmet_needs.length > 0 && (
+                          <div style={{ marginTop: 8 }}>
+                            <p style={{ fontSize: 10, color: C.stone, marginBottom: 4 }}>Unmet needs:</p>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                              {concept.unmet_needs.map((n, j) => <span key={j} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, background: C.amberLight, color: C.amber }}>{n}</span>)}
                             </div>
-                          )}
-                          {concept.unmet_needs.length > 0 && (
-                            <div className="mt-2">
-                              <p className="text-xs text-brand-400 mb-1">Unmet needs:</p>
-                              <div className="flex flex-wrap gap-1">
-                                {concept.unmet_needs.map((n, j) => (
-                                  <span key={j} className="text-xs bg-amber-500/15 text-amber-300 px-2 py-0.5 rounded">
-                                    {n}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
 
-                {/* Topics in this cell */}
                 {drillDown.topics.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-brand-200 mb-3">
-                      Topics ({drillDown.topics.length})
-                    </h3>
-                    <div className="space-y-2">
-                      {drillDown.topics.map((topic) => (
-                        <a
-                          key={topic.id}
-                          href={`/topics/${topic.id}`}
-                          className="block bg-srf rounded-lg p-3 border border-ln hover:border-brand-500 transition-colors"
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-white">{topic.name}</span>
-                            <ChevronRight className="h-4 w-4 text-brand-500" />
+                    <h3 style={{ fontSize: 13, fontWeight: 600, color: C.charcoalDeep, marginBottom: 8 }}>Topics ({drillDown.topics.length})</h3>
+                    {drillDown.topics.map(topic => {
+                      const s = STAGE[topic.stage] || { bg: C.borderLight, text: C.stone }
+                      return (
+                        <a key={topic.id} href={`/topics/${topic.id}`} style={{
+                          display: 'block', background: C.bg, borderRadius: 10, padding: '12px 14px',
+                          border: `1px solid ${C.borderLight}`, marginBottom: 6, textDecoration: 'none', color: C.ink,
+                          transition: 'border-color 0.15s',
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{topic.name}</span>
+                            <ChevronRight style={{ width: 14, height: 14, color: C.sand }} />
                           </div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`text-xs px-2 py-0.5 rounded ${stageBadge[topic.stage] || 'bg-brand-800 text-brand-300'}`}>
-                              {topic.stage}
-                            </span>
-                            {topic.opportunity_score != null && (
-                              <span className="text-xs text-emerald-400">
-                                Opp: {topic.opportunity_score.toFixed(0)}
-                              </span>
-                            )}
-                            {topic.median_price != null && (
-                              <span className="text-xs text-brand-400">
-                                ${topic.median_price.toFixed(0)}
-                              </span>
-                            )}
-                            {topic.dissatisfaction_pct != null && topic.dissatisfaction_pct > 0 && (
-                              <span className="text-xs text-amber-400">
-                                {topic.dissatisfaction_pct.toFixed(0)}% pain
-                              </span>
-                            )}
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                            <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 8, background: s.bg, color: s.text, textTransform: 'capitalize' }}>{topic.stage}</span>
+                            {topic.opportunity_score != null && <span style={{ fontSize: 11, color: C.sage }}>Opp: {topic.opportunity_score.toFixed(0)}</span>}
+                            {topic.median_price != null && <span style={{ fontSize: 11, color: C.slate }}>${topic.median_price.toFixed(0)}</span>}
+                            {topic.dissatisfaction_pct != null && topic.dissatisfaction_pct > 0 && <span style={{ fontSize: 11, color: C.amber }}>{topic.dissatisfaction_pct.toFixed(0)}% pain</span>}
                           </div>
                           {topic.top_complaints.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {topic.top_complaints.slice(0, 3).map((c, i) => (
-                                <span key={i} className="text-xs bg-red-500/10 text-red-300 px-1.5 py-0.5 rounded">
-                                  {c}
-                                </span>
-                              ))}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                              {topic.top_complaints.slice(0, 3).map((c, i) => <span key={i} style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: C.roseLight, color: C.rose }}>{c}</span>)}
                             </div>
                           )}
                         </a>
-                      ))}
-                    </div>
+                      )
+                    })}
                   </div>
                 )}
               </div>
-            ) : (
-              <div className="p-8 text-center text-brand-500">No data available for this cell.</div>
-            )}
+            ) : <div style={{ padding: 32, textAlign: 'center', color: C.sand }}>No data available for this cell.</div>}
           </div>
         </div>
       )}

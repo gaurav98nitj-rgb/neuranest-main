@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-
-
 const API_BASE = 'http://localhost:8000/api/v1';
 
 /* ─── Types ─── */
@@ -44,44 +42,44 @@ interface ScoreDelta {
   current_score: number; prev_score: number; delta: number;
 }
 
-/* ─── NeuraNest brand palette ─── */
+/* ─── Warm palette ─── */
 const C = {
-  bg: '#F8FAFC',
+  bg: '#F9F7F4',
   card: '#FFFFFF',
-  border: '#E2E8F0',
-  borderLight: '#F1F5F9',
-  coral: '#E16A4A',   // Neural Orange
-  coralHover: '#C85A3A',
-  coralLight: '#FEF0EB',
-  coralUltraLight: '#FFF7F5',
-  sage: '#2ED3A5',   // Growth Mint
-  sageLight: '#EAFAF5',
-  amber: '#FFC857',   // Insight Gold
+  border: '#E6E1DA',
+  borderLight: '#F0ECE6',
+  coral: '#E8714A',
+  coralHover: '#D4623D',
+  coralLight: '#FCEEE8',
+  coralUltraLight: '#FFF6F3',
+  sage: '#1A8754',
+  sageLight: '#E8F5EE',
+  amber: '#D4930D',
   amberLight: '#FFF8E6',
-  rose: '#EF4444',
-  roseLight: '#FEF2F2',
-  plum: '#6B4EFF',   // Signal Purple
-  plumLight: '#F0EEFF',
-  charcoal: '#2C5282',   // Deep Blue mid
-  charcoalDeep: '#1E3A5F',   // Deep Intelligence Blue
-  ink: '#0F172A',
-  slate: '#475569',
-  stone: '#64748B',
-  sand: '#94A3B8',
+  rose: '#C0392B',
+  roseLight: '#FFF0F0',
+  plum: '#7C3AED',
+  plumLight: '#F3EEFF',
+  charcoal: '#2D3E50',
+  charcoalDeep: '#1A2A3A',
+  ink: '#2A2520',
+  slate: '#5C5549',
+  stone: '#8B8479',
+  sand: '#B8B2A8',
 };
 
 const STAGE_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  emerging: { bg: '#EAFAF5', text: '#2ED3A5', dot: '#2ED3A5' },
-  exploding: { bg: '#FEF0EB', text: '#E16A4A', dot: '#E16A4A' },
-  peaking: { bg: '#FFF8E6', text: '#E6B34A', dot: '#FFC857' },
-  declining: { bg: '#FEF2F2', text: '#EF4444', dot: '#EF4444' },
-  unknown: { bg: '#F1F5F9', text: '#94A3B8', dot: '#94A3B8' },
-  stable: { bg: '#F0EEFF', text: '#6B4EFF', dot: '#6B4EFF' },
+  emerging:  { bg: '#E8F5EE', text: '#1A8754', dot: '#1A8754' },
+  exploding: { bg: '#FCEEE8', text: '#E8714A', dot: '#E8714A' },
+  peaking:   { bg: '#FFF8E6', text: '#D4930D', dot: '#D4930D' },
+  declining: { bg: '#FFF0F0', text: '#C0392B', dot: '#C0392B' },
+  unknown:   { bg: '#F0ECE6', text: '#8B8479', dot: '#8B8479' },
+  stable:    { bg: '#F3EEFF', text: '#7C3AED', dot: '#7C3AED' },
 };
 
 const CATEGORY_COLORS = [
-  '#E16A4A', '#6B4EFF', '#2ED3A5', '#FFC857', '#1E3A5F',
-  '#EF4444', '#2C5282', '#C85A3A', '#24B890', '#5A3DE8',
+  '#E8714A', '#1A8754', '#7C3AED', '#D4930D', '#2D3E50',
+  '#C0392B', '#425B73', '#B8502F', '#136B42', '#6025C7',
 ];
 
 /* ─── Shared Sub-components ─── */
@@ -101,12 +99,12 @@ function Sparkline({ data, color = '#1A8754', width = 80, height = 28 }: {
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
       <defs>
-        <linearGradient id={`sg-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={`sg-${color.replace('#','')}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.2" />
           <stop offset="100%" stopColor={color} stopOpacity="0.0" />
         </linearGradient>
       </defs>
-      <polygon points={`0,${height} ${points} ${width},${height}`} fill={`url(#sg-${color.replace('#', '')})`} />
+      <polygon points={`0,${height} ${points} ${width},${height}`} fill={`url(#sg-${color.replace('#','')})`} />
       <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -141,10 +139,10 @@ function StatCard({ icon, label, value, sub, color }: {
         borderRadius: '50%', background: color, opacity: 0.08,
       }} />
       <div style={{ fontSize: 22, marginBottom: 8 }}>{icon}</div>
-      <div style={{ fontSize: 11, color: C.stone, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4, fontFamily: "'Sora', sans-serif" }}>
+      <div style={{ fontSize: 11, color: C.stone, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         {label}
       </div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: C.charcoalDeep, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums' }}>
+      <div style={{ fontSize: 28, fontWeight: 700, color: C.charcoalDeep, fontFamily: "'JetBrains Mono', monospace" }}>
         {value}
       </div>
       {sub && <div style={{ fontSize: 11, color: C.sand, marginTop: 4 }}>{sub}</div>}
@@ -198,7 +196,7 @@ function TopicRow({ rank, topic, metric, metricLabel, metricColor, onClick }: {
       </div>
       {topic.sparkline && <Sparkline data={topic.sparkline} color={metricColor} width={64} height={24} />}
       <div style={{ textAlign: 'right', minWidth: 50 }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: metricColor, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: metricColor, fontFamily: "'JetBrains Mono', monospace" }}>
           {metric.toFixed(1)}
         </div>
         <div style={{ fontSize: 9, color: C.sand, textTransform: 'uppercase' }}>{metricLabel}</div>
@@ -296,7 +294,7 @@ function DeltaRow({ item, onClick }: { item: ScoreDelta; onClick?: () => void })
       </div>
       <div style={{ textAlign: 'right' }}>
         <div style={{
-          fontSize: 14, fontWeight: 700, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums',
+          fontSize: 14, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
           color: isUp ? C.sage : C.rose,
         }}>
           {isUp ? '+' : ''}{item.delta.toFixed(1)}
@@ -328,7 +326,7 @@ function CategoryMomentumBar({ category, avg_score, topic_count, maxScore, color
         }} />
       </div>
       <span style={{
-        fontSize: 12, fontWeight: 700, color: C.ink, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums',
+        fontSize: 12, fontWeight: 700, color: C.ink, fontFamily: "'JetBrains Mono', monospace",
         width: 36, textAlign: 'right',
       }}>
         {avg_score.toFixed(1)}
@@ -359,8 +357,8 @@ function SectionCard({ title, subtitle, children, accentColor }: {
       )}
       <div style={{ marginBottom: 16 }}>
         <h3 style={{
-          fontSize: 15, fontWeight: 700, margin: 0, color: C.charcoalDeep,
-          fontFamily: "'Sora', sans-serif",
+          fontSize: 15, fontWeight: 600, margin: 0, color: C.charcoalDeep,
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
         }}>{title}</h3>
         {subtitle && (
           <p style={{ fontSize: 11, color: C.stone, margin: '4px 0 0' }}>{subtitle}</p>
@@ -446,7 +444,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: C.bg }}>
-        <div style={{ color: C.coral, fontSize: 16, fontFamily: "'Sora', sans-serif" }}>Loading dashboard...</div>
+        <div style={{ color: C.coral, fontSize: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Loading dashboard...</div>
       </div>
     );
   }
@@ -459,14 +457,14 @@ export default function DashboardPage() {
   return (
     <div style={{
       minHeight: '100vh', background: C.bg, color: C.ink,
-      fontFamily: "'Inter', -apple-system, sans-serif",
+      fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
       padding: '28px 36px',
     }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{
-          fontSize: 30, fontWeight: 800, margin: 0, letterSpacing: '-0.03em',
-          color: C.charcoalDeep, fontFamily: "'Sora', sans-serif",
+          fontSize: 30, fontWeight: 400, margin: 0, letterSpacing: '-0.02em',
+          color: C.charcoalDeep, fontFamily: "'Newsreader', Georgia, serif",
         }}>
           Trend Intelligence
         </h1>
@@ -792,7 +790,7 @@ export default function DashboardPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                   {t.sparkline && <Sparkline data={t.sparkline} width={100} height={28} />}
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: C.sage, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums' }}>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: C.sage, fontFamily: "'JetBrains Mono', monospace" }}>
                       {(t.opportunity_score || t.latest_scores?.opportunity || 0).toFixed(1)}
                     </div>
                     <div style={{ fontSize: 9, color: C.sand, textTransform: 'uppercase' }}>opportunity</div>

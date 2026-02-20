@@ -15,6 +15,7 @@ import ScienceRadarPage from './pages/ScienceRadarPage'
 import AmazonBAPage from './pages/AmazonBAPage'
 import ProductIntelligencePage from './pages/ProductIntelligencePage'
 import WhiteSpacePage from './pages/WhiteSpacePage'
+import BacktestPage from './pages/BacktestPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import ProductBriefPage from './pages/ProductBriefPage'
@@ -63,6 +64,7 @@ export default function App() {
         <Route path="/science" element={<ScienceRadarPage />} />
         <Route path="/amazon-ba" element={<AmazonBAPage />} />
         <Route path="/product-intelligence" element={<ProductIntelligencePage />} />
+        <Route path="/backtest" element={<BacktestPage />} />
         <Route path="/product-brief" element={<ProductBriefPage />} />
       </Route>
 

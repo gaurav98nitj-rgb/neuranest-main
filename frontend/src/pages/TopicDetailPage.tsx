@@ -1,135 +1,58 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTopic, useTimeseries, useForecast, useCompetition, useReviewsSummary, useGenNextSpec, useAddToWatchlist } from '../hooks/useData'
-import { socialApi, api } from '../lib/api'
-import {
-  ArrowLeft, Eye, TrendingUp, Shield, MessageSquare, Lightbulb,
-  ChevronDown, ChevronUp, Info, Zap, AlertTriangle, Activity,
-  Clock, Target, Beaker, Radio, Bell, ExternalLink, BookmarkCheck
-} from 'lucide-react'
-import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceLine } from 'recharts'
+import { socialApi } from '../lib/api'
+import { ArrowLeft, Eye, TrendingUp, Shield, MessageSquare, Lightbulb, ChevronDown, ChevronUp, Info, Zap, AlertTriangle, BarChart3 } from 'lucide-react'
+import { ComposedChart, Area, Line, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceLine } from 'recharts'
+import clsx from 'clsx'
 
-/* ─── NeuraNest Brand Palette ─── */
-const C = {
-  bg: '#F8FAFC', card: '#FFFFFF', border: '#E2E8F0', borderLight: '#F1F5F9',
-  coral: '#E16A4A', coralHover: '#C85A3A', coralLight: '#FEF0EB', coralUltraLight: '#FFF7F5',
-  sage: '#2ED3A5', sageLight: '#EAFAF5', amber: '#FFC857', amberLight: '#FFF8E6',
-  rose: '#EF4444', roseLight: '#FEF2F2', plum: '#6B4EFF', plumLight: '#F0EEFF',
-  charcoal: '#2C5282', charcoalDeep: '#1E3A5F',
-  ink: '#0F172A', slate: '#475569', stone: '#64748B', sand: '#94A3B8',
-}
-
-const STAGE_CONFIG: Record<string, { bg: string; text: string; dot: string; label: string }> = {
-  emerging: { bg: C.sageLight, text: C.sage, dot: C.sage, label: 'Emerging' },
-  exploding: { bg: C.coralLight, text: C.coral, dot: C.coral, label: 'Exploding' },
-  peaking: { bg: C.amberLight, text: C.amber, dot: C.amber, label: 'Peaking' },
-  declining: { bg: C.roseLight, text: C.rose, dot: C.rose, label: 'Declining' },
-  unknown: { bg: C.borderLight, text: C.stone, dot: C.stone, label: 'Unknown' },
-}
+const tabs = [
+  { id: 'trend', label: 'Trend & Signals', icon: TrendingUp },
+  { id: 'competition', label: 'Competition', icon: Shield },
+  { id: 'reviews', label: 'Reviews', icon: MessageSquare },
+  { id: 'social', label: 'Social', icon: Zap },
+  { id: 'gennext', label: 'Gen-Next', icon: Lightbulb },
+]
 
 const COMPONENT_META: Record<string, { label: string; color: string; description: string }> = {
-  demand_growth: { label: 'Demand Growth', color: C.coral, description: 'Search volume growth rate over recent weeks' },
-  acceleration: { label: 'Acceleration', color: C.amber, description: 'Rate of change in growth — is momentum building?' },
-  low_competition: { label: 'Low Competition', color: C.sage, description: 'Inverse of Amazon competition index' },
-  cross_source: { label: 'Cross-Source', color: C.plum, description: 'Confirmation across Google Trends, Reddit, Amazon' },
-  review_gap: { label: 'Review Gap', color: C.rose, description: 'Gap between demand and review quality/quantity' },
-  forecast_uplift: { label: 'Forecast Uplift', color: '#D4930D', description: 'Prophet model predicts rising demand ahead' },
-  geo_expansion: { label: 'Geo Expansion', color: C.charcoal, description: 'Interest spreading across multiple regions' },
+  demand_growth:   { label: 'Demand Growth',   color: '#2E86C1', description: 'Search volume growth rate' },
+  acceleration:    { label: 'Acceleration',     color: '#E67E22', description: 'Rate of change in growth' },
+  low_competition: { label: 'Low Competition',  color: '#27AE60', description: 'Inverse of Amazon competition' },
+  cross_source:    { label: 'Cross-Source',     color: '#8E44AD', description: 'Confirmation across data sources' },
+  review_gap:      { label: 'Review Gap',       color: '#E74C3C', description: 'Gap between demand and quality' },
+  forecast_uplift: { label: 'Forecast Uplift',  color: '#F39C12', description: 'Model predicts rising demand' },
+  geo_expansion:   { label: 'Geo Expansion',    color: '#16A085', description: 'Interest spreading across regions' },
+  search_momentum: { label: 'Search Momentum',  color: '#4285F4', description: 'Google Trends velocity' },
+  social_buzz:     { label: 'Social Buzz',      color: '#FF5700', description: 'Reddit + social engagement' },
+  demand_rank:     { label: 'Demand Rank',      color: '#FF9900', description: 'Amazon BA search frequency' },
+  competition_gap: { label: 'Competition Gap',  color: '#27AE60', description: 'Room for new entrants' },
+  science_signal:  { label: 'Science Signal',   color: '#7C3AED', description: 'Research paper validation' },
+  data_richness:   { label: 'Data Richness',    color: '#6B7280', description: 'Number of signal sources' },
 }
 
-const SIGNAL_META: Record<string, { label: string; emoji: string }> = {
-  google_trends: { label: 'Google Trends', emoji: '📈' },
-  reddit: { label: 'Reddit', emoji: '💬' },
-  instagram: { label: 'Instagram/FB', emoji: '📸' },
-  tiktok: { label: 'TikTok', emoji: '🎵' },
-  science: { label: 'Science Papers', emoji: '🔬' },
-  facebook: { label: 'Facebook', emoji: '👥' },
-  bioRxiv: { label: 'Science Papers', emoji: '🔬' },
+// ─── Color helpers (warm palette) ───
+const scoreColor = (v: number | null) => {
+  if (v === null || v === undefined) return '#8B8479'
+  if (v >= 60) return '#1A8754'
+  if (v >= 40) return '#D4930D'
+  return '#C0392B'
+}
+const scoreBg = (v: number | null) => {
+  if (v === null || v === undefined) return '#F9F7F4'
+  if (v >= 60) return '#E8F5EE'
+  if (v >= 40) return '#FFF8E6'
+  return '#FFF0F0'
+}
+const stageBadge = (stage: string) => {
+  const m: Record<string, string> = {
+    emerging: 'bg-sage-50 text-sage-400 border-sage-100',
+    exploding: 'bg-coral-100 text-coral-500 border-coral-200',
+    peaking: 'bg-amber-50 text-amber-300 border-amber-100',
+    declining: 'bg-rose-50 text-rose-400 border-rose-100',
+  }
+  return m[stage] || 'bg-sand-200 text-sand-600 border-sand-300'
 }
 
-const ARCHETYPE_CONFIG: Record<string, { icon: any; label: string; color: string }> = {
-  'science-led': { icon: Beaker, label: 'Science-Led', color: C.plum },
-  'social-led': { icon: Radio, label: 'Social-Led', color: C.coral },
-  'problem-led': { icon: Target, label: 'Problem-Led', color: C.sage },
-  'demand-led': { icon: TrendingUp, label: 'Demand-Led', color: C.amber },
-  'unknown': { icon: Activity, label: 'Multi-Signal', color: C.stone },
-}
-
-/* ─── Shared Components ─── */
-function StageBadge({ stage, size = 'md' }: { stage: string; size?: 'sm' | 'md' | 'lg' }) {
-  const s = STAGE_CONFIG[stage] || STAGE_CONFIG.unknown
-  const sizes = { sm: { fs: 10, px: 8, py: 2, dot: 5 }, md: { fs: 12, px: 12, py: 4, dot: 6 }, lg: { fs: 14, px: 16, py: 5, dot: 8 } }
-  const sz = sizes[size]
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6,
-      padding: `${sz.py}px ${sz.px}px`, borderRadius: 24,
-      fontSize: sz.fs, fontWeight: 600, background: s.bg, color: s.text,
-      textTransform: 'capitalize', letterSpacing: '0.03em',
-    }}>
-      <span style={{ width: sz.dot, height: sz.dot, borderRadius: '50%', background: s.dot }} />
-      {s.label}
-    </span>
-  )
-}
-
-function SectionCard({ title, subtitle, icon, accentColor, children, noPadding }: {
-  title: string; subtitle?: string; icon?: React.ReactNode; accentColor?: string; children: React.ReactNode; noPadding?: boolean;
-}) {
-  return (
-    <div style={{
-      background: C.card, borderRadius: 14, padding: noPadding ? 0 : 24,
-      border: `1px solid ${C.border}`, boxShadow: '0 1px 3px rgba(42,37,32,0.04)',
-      position: 'relative', overflow: 'hidden',
-    }}>
-      {accentColor && (
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${accentColor}, ${accentColor}60)` }} />
-      )}
-      <div style={{ padding: noPadding ? '20px 24px 0' : 0, marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {icon}
-          <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: C.charcoalDeep, fontFamily: "'Sora', sans-serif" }}>{title}</h3>
-        </div>
-        {subtitle && <p style={{ fontSize: 11, color: C.stone, margin: '4px 0 0' }}>{subtitle}</p>}
-      </div>
-      <div style={{ padding: noPadding ? '0 24px 24px' : 0 }}>{children}</div>
-    </div>
-  )
-}
-
-/* ─── Score Donut ─── */
-function ScoreDonut({ score, label, size = 72, color }: { score: number; label: string; size?: number; color?: string }) {
-  const c = color || (score >= 70 ? C.sage : score >= 40 ? C.amber : C.rose)
-  const r = (size - 8) / 2
-  const circumference = 2 * Math.PI * r
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={C.borderLight} strokeWidth="5" />
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={c} strokeWidth="5"
-            strokeDasharray={`${(score / 100) * circumference} ${circumference}`}
-            strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`}
-            style={{ transition: 'stroke-dasharray 0.6s ease' }} />
-        </svg>
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: size > 60 ? 18 : 14, fontWeight: 800, color: C.ink, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums',
-        }}>
-          {score.toFixed(0)}
-        </div>
-      </div>
-      <div style={{ fontSize: 10, fontWeight: 600, color: C.stone, textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 4 }}>
-        {label}
-      </div>
-    </div>
-  )
-}
-
-
-/* ═══════════════════════════════════════════════
-   MAIN TOPIC DETAIL / EVIDENCE PAGE
-   ═══════════════════════════════════════════════ */
 export default function TopicDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -137,332 +60,66 @@ export default function TopicDetailPage() {
   const { data: topic, isLoading } = useTopic(id!)
   const addToWatchlist = useAddToWatchlist()
 
-  // Fetch explainability data
-  const [explainability, setExplainability] = useState<any>(null)
-  useEffect(() => {
-    if (!id) return
-    api.get('/topics', { params: { search: '', page_size: 1, include_explainability: true } })
-      .then(() => {
-        // Fetch the single topic with explainability via the detail endpoint
-        // The detail endpoint already returns explanation_json in latest_scores
-      })
-      .catch(() => { })
-  }, [id])
+  if (isLoading) return (
+    <div className="p-6 flex items-center gap-3 text-sand-500">
+      <div className="w-5 h-5 border-2 border-sand-300 border-t-coral-400 rounded-full animate-spin" />
+      Loading topic...
+    </div>
+  )
+  if (!topic) return <div className="p-6 text-rose-500">Topic not found</div>
 
-  if (isLoading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: C.bg }}>
-        <div style={{ color: C.coral, fontSize: 14 }}>Loading topic...</div>
-      </div>
-    )
-  }
-  if (!topic) {
-    return (
-      <div style={{ padding: 40, background: C.bg, minHeight: '100vh' }}>
-        <div style={{ color: C.rose, fontSize: 14 }}>Topic not found</div>
-      </div>
-    )
-  }
-
-  const scores = topic.latest_scores || {}
-  const opportunity = scores.opportunity || {}
-  const competition = scores.competition || {}
-  const demand = scores.demand || {}
-  const explanation = opportunity.explanation || {}
-  const components = explanation.components || {}
-  const confidence = explanation.confidence || 'low'
-  const dampenerApplied = explanation.dampener_applied || false
-
-  // Derive convergence from explanation or scores
-  const sortedComponents = Object.entries(components)
-    .map(([key, comp]: [string, any]) => ({ key, ...comp }))
-    .sort((a, b) => (b.contribution || 0) - (a.contribution || 0))
-
-  const maxContribution = sortedComponents.length > 0 ? Math.max(...sortedComponents.map(c => c.contribution || 0)) : 1
-
-  // Derive risk signals
-  const compValue = competition.value || 50
-  const risks: { type: string; level: string; detail: string }[] = []
-  if (compValue > 70) risks.push({ type: 'competition', level: 'high', detail: `Competition index: ${compValue.toFixed(0)}/100 — crowded market` })
-  if (topic.stage === 'peaking') risks.push({ type: 'lifecycle', level: 'medium', detail: 'Trend may be past peak growth phase' })
-  if (topic.stage === 'declining') risks.push({ type: 'lifecycle', level: 'high', detail: 'Trend is in decline — high risk for new entrants' })
-  if (dampenerApplied) risks.push({ type: 'data', level: 'medium', detail: 'Limited data available — score dampened ~15%' })
-  if (confidence === 'low') risks.push({ type: 'confidence', level: 'medium', detail: 'Low confidence — fewer than 2 data sources' })
-
-  // Time-to-peak
-  const timeToPeak = topic.stage === 'emerging' ? '6–12 months' : topic.stage === 'exploding' ? '1–3 months' : topic.stage === 'peaking' ? 'At peak' : topic.stage === 'declining' ? 'Past peak' : 'Unknown'
-
-  // Archetype (heuristic)
-  const hasScience = sortedComponents.some(c => c.key === 'geo_expansion' && c.contribution > 3)
-  const hasSocial = (components.cross_source?.sources_positive || 0) >= 2
-  const hasReviewGap = (components.review_gap?.severity || 0) > 50
-  const archetype = hasScience ? 'science-led' : hasSocial ? 'social-led' : hasReviewGap ? 'problem-led' : 'demand-led'
-  const archetypeConfig = ARCHETYPE_CONFIG[archetype] || ARCHETYPE_CONFIG.unknown
-  const ArchetypeIcon = archetypeConfig.icon
-
-  const tabs = [
-    { id: 'trend', label: 'Trend & Forecast', icon: TrendingUp },
-    { id: 'competition', label: 'Competition', icon: Shield },
-    { id: 'reviews', label: 'Review Intelligence', icon: MessageSquare },
-    { id: 'social', label: 'Social Signals', icon: Zap },
-    { id: 'gennext', label: 'Gen-Next Spec', icon: Lightbulb },
-  ]
+  // Get opportunity score from latest_scores or topic itself
+  const oppScore = topic.latest_scores?.opportunity?.value ?? null
 
   return (
-    <div style={{
-      minHeight: '100vh', background: C.bg, color: C.ink,
-      fontFamily: "'Inter', -apple-system, sans-serif",
-      padding: '24px 36px',
-    }}>
-      {/* Back nav */}
-      <button onClick={() => navigate(-1)} style={{
-        display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: C.stone,
-        background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 16,
-      }}>
-        <ArrowLeft style={{ width: 14, height: 14 }} /> Back to Explorer
-      </button>
-
-      {/* ═══ HERO HEADER ═══ */}
-      <div style={{
-        background: C.card, borderRadius: 16, border: `1px solid ${C.border}`,
-        padding: '28px 32px', marginBottom: 24,
-        boxShadow: '0 2px 8px rgba(42,37,32,0.06)',
-        position: 'relative', overflow: 'hidden',
-      }}>
-        {/* Top accent */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${C.coral}, ${C.sage})` }} />
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          {/* Left: Name + badges */}
-          <div>
-            <h1 style={{
-              fontSize: 28, fontWeight: 800, margin: 0, color: C.charcoalDeep,
-              fontFamily: "'Sora', sans-serif", letterSpacing: '-0.03em',
-            }}>
-              {topic.name}
-            </h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
-              <StageBadge stage={topic.stage} size="md" />
-              {topic.primary_category && (
-                <span style={{ fontSize: 13, color: C.stone }}>{topic.primary_category}</span>
-              )}
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600,
-                color: archetypeConfig.color, padding: '3px 10px', borderRadius: 12,
-                background: archetypeConfig.color + '12',
-              }}>
-                <ArchetypeIcon style={{ width: 11, height: 11 }} />
-                {archetypeConfig.label}
-              </span>
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600,
-                color: confidence === 'high' ? C.sage : confidence === 'medium' ? C.amber : C.stone,
-                padding: '3px 10px', borderRadius: 12,
-                background: (confidence === 'high' ? C.sage : confidence === 'medium' ? C.amber : C.stone) + '12',
-              }}>
-                <Shield style={{ width: 10, height: 10 }} />
-                {confidence.charAt(0).toUpperCase() + confidence.slice(1)} Confidence
-              </span>
-            </div>
-          </div>
-
-          {/* Right: Actions */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => addToWatchlist.mutate(id!)} style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px',
-              background: C.coral, color: '#fff', border: 'none', borderRadius: 10,
-              cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'background 0.15s',
-            }}>
-              <Eye style={{ width: 14, height: 14 }} /> Add to Watchlist
-            </button>
-            <button style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px',
-              background: C.card, color: C.stone, border: `1px solid ${C.border}`, borderRadius: 10,
-              cursor: 'pointer', fontSize: 13, fontWeight: 600,
-            }}>
-              <Bell style={{ width: 14, height: 14 }} /> Set Alert
-            </button>
+    <div className="p-6 min-h-screen bg-sand-50">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-sand-500 hover:text-coral-400 mb-2 transition-colors">
+            <ArrowLeft className="h-4 w-4" /> Back to Explorer
+          </button>
+          <h1 className="text-2xl text-charcoal-700" style={{ fontFamily: "'Newsreader', Georgia, serif", fontWeight: 400 }}>
+            {topic.name}
+          </h1>
+          <div className="flex items-center gap-3 mt-2">
+            <span className={clsx('text-xs font-medium px-2.5 py-0.5 rounded-full capitalize border', stageBadge(topic.stage))}>
+              {topic.stage}
+            </span>
+            {topic.primary_category && <span className="text-sm text-sand-600">{topic.primary_category}</span>}
+            {topic.description && <span className="text-xs text-sand-500 ml-2">{topic.description}</span>}
           </div>
         </div>
-
-        {/* Score cards row */}
-        <div style={{ display: 'flex', gap: 20, marginTop: 24, alignItems: 'center' }}>
-          <ScoreDonut score={opportunity.value || 0} label="Opportunity" color={C.coral} size={80} />
-          <ScoreDonut score={compValue} label="Competition" color={C.charcoal} size={64} />
-          <ScoreDonut score={demand.value || 0} label="Demand" color={C.sage} size={64} />
-
-          <div style={{ width: 1, height: 50, background: C.borderLight, margin: '0 8px' }} />
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <Clock style={{ width: 13, height: 13, color: C.stone }} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: C.charcoal }}>Time to Peak</span>
-            </div>
-            <span style={{ fontSize: 18, fontWeight: 700, color: C.ink, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums' }}>
-              {timeToPeak}
-            </span>
-          </div>
-
-          <div style={{ width: 1, height: 50, background: C.borderLight, margin: '0 8px' }} />
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <Activity style={{ width: 13, height: 13, color: C.stone }} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: C.charcoal }}>Signals</span>
-            </div>
-            <span style={{ fontSize: 18, fontWeight: 700, color: C.ink, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums' }}>
-              {components.cross_source?.total_sources || '—'}
-            </span>
-            <span style={{ fontSize: 11, color: C.stone, marginLeft: 4 }}>active sources</span>
-          </div>
-        </div>
+        <button
+          onClick={() => addToWatchlist.mutate(id!)}
+          className="flex items-center gap-2 px-4 py-2 bg-coral-400 text-white rounded-lg hover:bg-coral-500 text-sm font-medium transition-colors"
+        >
+          <Eye className="h-4 w-4" /> Add to Watchlist
+        </button>
       </div>
 
-      {/* ═══ EVIDENCE PANEL (3-column) ═══ */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
+      {/* Score Cards */}
+      {topic.latest_scores && <ScoreSection scores={topic.latest_scores} />}
 
-        {/* Col 1: Score Breakdown */}
-        <SectionCard title="Opportunity Score Breakdown" icon={<Zap style={{ width: 14, height: 14, color: C.coral }} />} accentColor={C.coral}>
-          {sortedComponents.length > 0 ? (
-            <>
-              {sortedComponents.map(comp => {
-                const meta = COMPONENT_META[comp.key] || { label: comp.key.replace(/_/g, ' '), color: C.stone, description: '' }
-                const pct = maxContribution > 0 ? ((comp.contribution || 0) / maxContribution) * 100 : 0
-                return (
-                  <div key={comp.key} style={{ marginBottom: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: 2, background: meta.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: 12, fontWeight: 500, color: C.slate }}>{meta.label}</span>
-                        <span style={{ fontSize: 9, color: C.sand }}>({((comp.weight || 0) * 100).toFixed(0)}%)</span>
-                      </div>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: meta.color, fontFamily: "'JetBrains Mono', monospace" }}>
-                        +{(comp.contribution || 0).toFixed(1)}
-                      </span>
-                    </div>
-                    <div style={{ height: 6, borderRadius: 3, background: C.borderLight, overflow: 'hidden' }}>
-                      <div style={{
-                        width: `${Math.min(pct, 100)}%`, height: '100%', borderRadius: 3,
-                        background: meta.color, transition: 'width 0.4s ease', opacity: 0.8,
-                      }} />
-                    </div>
-                    <div style={{ fontSize: 9, color: C.sand, marginTop: 2 }}>{meta.description}</div>
-                  </div>
-                )
-              })}
-              <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${C.borderLight}`, display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 10, color: C.stone }}>{sortedComponents.length} weighted components</span>
-                {dampenerApplied && (
-                  <span style={{ fontSize: 10, fontWeight: 600, color: C.amber, padding: '2px 8px', borderRadius: 8, background: C.amberLight }}>
-                    Dampener applied
-                  </span>
-                )}
-              </div>
-            </>
-          ) : (
-            <div style={{ fontSize: 12, color: C.sand, fontStyle: 'italic', textAlign: 'center', padding: 20 }}>
-              Score breakdown will appear after the scoring pipeline runs
-            </div>
-          )}
-        </SectionCard>
-
-        {/* Col 2: Signal Convergence */}
-        <SectionCard title="Signal Convergence" icon={<Activity style={{ width: 14, height: 14, color: C.sage }} />} accentColor={C.sage}>
-          <SignalConvergencePanel topicId={id!} />
-        </SectionCard>
-
-        {/* Col 3: Risk Matrix */}
-        <SectionCard title="Risk Assessment" icon={<AlertTriangle style={{ width: 14, height: 14, color: C.amber }} />} accentColor={C.amber}>
-          {risks.length > 0 ? (
-            risks.map((risk, i) => (
-              <div key={i} style={{
-                display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px',
-                borderRadius: 10, marginBottom: 6,
-                background: risk.level === 'high' ? C.roseLight : C.amberLight,
-                border: `1px solid ${risk.level === 'high' ? C.rose + '20' : C.amber + '20'}`,
-              }}>
-                <AlertTriangle style={{
-                  width: 14, height: 14, flexShrink: 0, marginTop: 1,
-                  color: risk.level === 'high' ? C.rose : C.amber,
-                }} />
-                <div>
-                  <div style={{
-                    fontSize: 12, fontWeight: 600,
-                    color: risk.level === 'high' ? C.rose : C.amber,
-                    textTransform: 'capitalize',
-                  }}>
-                    {risk.type} Risk
-                  </div>
-                  <div style={{ fontSize: 11, color: C.slate, marginTop: 2 }}>{risk.detail}</div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div style={{
-              padding: '12px 14px', borderRadius: 10, background: C.sageLight,
-              border: `1px solid ${C.sage}20`,
-              fontSize: 12, color: C.sage, fontWeight: 500, textAlign: 'center',
-            }}>
-              No significant risks detected — strong opportunity profile
-            </div>
-          )}
-
-          {/* Counter-evidence section */}
-          <div style={{ marginTop: 16, paddingTop: 12, borderTop: `1px solid ${C.borderLight}` }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.charcoal, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-              Counter-Evidence
-            </div>
-            {compValue > 60 && (
-              <div style={{ fontSize: 11, color: C.slate, marginBottom: 4, display: 'flex', gap: 6 }}>
-                <span style={{ color: C.rose }}>•</span>
-                High competition ({compValue.toFixed(0)}) suggests established players dominate
-              </div>
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 border-b border-sand-300">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={clsx(
+              'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors',
+              activeTab === tab.id
+                ? 'border-coral-400 text-coral-500'
+                : 'border-transparent text-sand-600 hover:text-charcoal-700'
             )}
-            {topic.stage === 'peaking' && (
-              <div style={{ fontSize: 11, color: C.slate, marginBottom: 4, display: 'flex', gap: 6 }}>
-                <span style={{ color: C.amber }}>•</span>
-                Peaking stage — growth may slow from here
-              </div>
-            )}
-            {dampenerApplied && (
-              <div style={{ fontSize: 11, color: C.slate, marginBottom: 4, display: 'flex', gap: 6 }}>
-                <span style={{ color: C.amber }}>•</span>
-                Limited data history — predictions less reliable
-              </div>
-            )}
-            {(!compValue || compValue <= 60) && topic.stage !== 'peaking' && !dampenerApplied && (
-              <div style={{ fontSize: 11, color: C.sage, fontStyle: 'italic' }}>
-                No strong counter-evidence found
-              </div>
-            )}
-          </div>
-        </SectionCard>
+          >
+            <tab.icon className="h-4 w-4" /> {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* ═══ TAB NAVIGATION ═══ */}
-      <div style={{
-        display: 'flex', gap: 2, marginBottom: 24, borderBottom: `1px solid ${C.border}`,
-      }}>
-        {tabs.map(tab => {
-          const isActive = activeTab === tab.id
-          const Icon = tab.icon
-          return (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '12px 18px',
-              fontSize: 13, fontWeight: isActive ? 600 : 500,
-              color: isActive ? C.coral : C.stone,
-              borderBottom: `2px solid ${isActive ? C.coral : 'transparent'}`,
-              background: 'none', border: 'none', borderBottomStyle: 'solid',
-              cursor: 'pointer', transition: 'all 0.15s',
-            }}>
-              <Icon style={{ width: 15, height: 15 }} />
-              {tab.label}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* ═══ TAB CONTENT ═══ */}
+      {/* Tab Content */}
       {activeTab === 'trend' && <TrendTab topicId={id!} />}
       {activeTab === 'competition' && <CompetitionTab topicId={id!} />}
       {activeTab === 'reviews' && <ReviewsTab topicId={id!} />}
@@ -472,340 +129,420 @@ export default function TopicDetailPage() {
   )
 }
 
+// ─── Score Section ───
+function ScoreSection({ scores }: { scores: Record<string, any> }) {
+  const [expanded, setExpanded] = useState(false)
+  const opportunity = scores.opportunity
+  const components = opportunity?.explanation?.components
 
-/* ─── Signal Convergence Panel ─── */
-function SignalConvergencePanel({ topicId }: { topicId: string }) {
-  const { data: ts } = useTimeseries(topicId)
-  const sources = new Set((ts?.data || []).map((p: any) => p.source))
-
-  const allSignals = [
-    { key: 'google_trends', label: 'Google Trends', emoji: '📈', active: sources.has('google_trends') },
-    { key: 'reddit', label: 'Reddit', emoji: '💬', active: sources.has('reddit') },
-    { key: 'instagram', label: 'Instagram/FB', emoji: '📸', active: sources.has('instagram') || sources.has('facebook') },
-    { key: 'tiktok', label: 'TikTok', emoji: '🎵', active: sources.has('tiktok') },
-    { key: 'science', label: 'Science', emoji: '🔬', active: sources.has('science') || sources.has('bioRxiv') },
-  ]
-
-  const activeCount = allSignals.filter(s => s.active).length
+  const scoreOrder = ['opportunity', 'demand', 'competition']
+  const sortedEntries = Object.entries(scores).sort(([a], [b]) => {
+    const ai = scoreOrder.indexOf(a)
+    const bi = scoreOrder.indexOf(b)
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+  })
 
   return (
-    <>
-      {allSignals.map(signal => (
-        <div key={signal.key} style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-          borderRadius: 10, marginBottom: 4,
-          background: signal.active ? C.sageLight : C.borderLight,
-          border: `1px solid ${signal.active ? C.sage + '30' : 'transparent'}`,
-        }}>
-          <span style={{ fontSize: 16 }}>{signal.emoji}</span>
-          <span style={{ flex: 1, fontSize: 12, fontWeight: 500, color: signal.active ? C.sage : C.sand }}>
-            {signal.label}
-          </span>
-          <span style={{
-            width: 8, height: 8, borderRadius: '50%',
-            background: signal.active ? C.sage : C.sand + '40',
-          }} />
-        </div>
-      ))}
-
-      <div style={{
-        marginTop: 12, padding: '10px 14px', borderRadius: 10,
-        background: activeCount >= 3 ? C.sageLight : activeCount >= 2 ? C.amberLight : C.borderLight,
-        border: `1px solid ${activeCount >= 3 ? C.sage + '20' : activeCount >= 2 ? C.amber + '20' : C.border}`,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <div style={{ display: 'flex', gap: 2 }}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} style={{ width: 10, height: 10, borderRadius: 2, background: i < activeCount ? C.coral : C.borderLight }} />
-            ))}
+    <div className="mb-6">
+      <div className="grid grid-cols-4 gap-4 mb-2">
+        {sortedEntries.map(([type, data]: [string, any]) => (
+          <div key={type} className="rounded-xl border p-4 transition-all"
+            style={{ background: scoreBg(data.value), borderColor: `${scoreColor(data.value)}22` }}>
+            <p className="text-xs text-sand-600 uppercase font-medium tracking-wide">{type.replace('_', ' ')}</p>
+            <p className="text-2xl font-bold mt-1" style={{ color: scoreColor(data.value) }}>
+              {data.value?.toFixed(1) || '—'}
+              <span className="text-xs font-normal text-sand-500 ml-1">/ 100</span>
+            </p>
+            {data.computed_at && (
+              <p className="text-[10px] text-sand-500 mt-1">{new Date(data.computed_at).toLocaleDateString()}</p>
+            )}
           </div>
-          <span style={{ fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums' }}>
-            {activeCount}/5
-          </span>
-        </div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: activeCount >= 3 ? C.sage : activeCount >= 2 ? C.amber : C.stone }}>
-          {activeCount >= 4 ? 'Strong convergence — high conviction signal'
-            : activeCount >= 3 ? 'Good convergence — trend validated across sources'
-              : activeCount >= 2 ? 'Partial convergence — monitor for confirmation'
-                : activeCount === 1 ? 'Single source — early stage, needs validation'
-                  : 'No signal data available yet'}
-        </div>
+        ))}
+
+        {opportunity?.explanation?.confidence && (
+          <div className="rounded-xl border p-4"
+            style={{
+              background: opportunity.explanation.confidence === 'high' ? '#E8F5EE' : '#FFF8E6',
+              borderColor: opportunity.explanation.confidence === 'high' ? '#1A875422' : '#D4930D22'
+            }}>
+            <p className="text-xs text-sand-600 uppercase font-medium tracking-wide">Confidence</p>
+            <div className="flex items-center gap-2 mt-1">
+              {opportunity.explanation.confidence === 'high' ? (
+                <Zap className="h-5 w-5 text-sage-400" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-amber-400" />
+              )}
+              <p className="text-lg font-bold capitalize"
+                style={{ color: opportunity.explanation.confidence === 'high' ? '#1A8754' : '#D4930D' }}>
+                {opportunity.explanation.confidence}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
-    </>
+
+      {components && (
+        <button onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-1 text-xs text-coral-400 hover:text-coral-500 font-medium mt-1 mb-2 transition-colors">
+          {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          {expanded ? 'Hide' : 'Show'} Score Breakdown
+        </button>
+      )}
+
+      {expanded && components && (
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-charcoal-700">Opportunity Score Components</h3>
+            <span className="text-xs text-sand-500">
+              Overall: <span className="font-bold text-charcoal-700">{opportunity.explanation.overall_score?.toFixed(1)}</span> / 100
+            </span>
+          </div>
+          <div className="space-y-3">
+            {Object.entries(components)
+              .sort(([, a]: [string, any], [, b]: [string, any]) => (b.contribution || 0) - (a.contribution || 0))
+              .map(([key, comp]: [string, any]) => {
+                const meta = COMPONENT_META[key] || { label: key.replace(/_/g, ' '), color: '#6B7280', description: '' }
+                const maxContribution = comp.weight * 100
+                const pct = maxContribution > 0 ? ((comp.contribution || 0) / maxContribution) * 100 : 0
+                return (
+                  <div key={key} className="group">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: meta.color }} />
+                        <span className="text-sm font-medium text-charcoal-700 capitalize">{meta.label}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-sand-500">{((comp.contribution || 0)).toFixed(1)} pts</span>
+                        <span className="text-xs text-sand-400 w-8 text-right">{Math.round(pct)}%</span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-sand-200 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${Math.min(Math.max(pct, 0), 100)}%`, backgroundColor: meta.color }} />
+                    </div>
+                    {meta.description && (
+                      <p className="text-[10px] text-sand-400 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">{meta.description}</p>
+                    )}
+                  </div>
+                )
+              })}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
-
-/* ─── Trend Tab ─── */
+// ─── Trend Tab: Multi-source signal timeline ───
 function TrendTab({ topicId }: { topicId: string }) {
   const { data: ts } = useTimeseries(topicId)
   const { data: forecast } = useForecast(topicId)
 
-  const dateMap: Record<string, { sum: number; count: number; sources: Record<string, number> }> = {}
+  const dateMap: Record<string, { sources: Record<string, number> }> = {}
   for (const p of (ts?.data || [])) {
-    const d = p.date
-    if (!dateMap[d]) dateMap[d] = { sum: 0, count: 0, sources: {} }
+    if (!dateMap[p.date]) dateMap[p.date] = { sources: {} }
     const val = p.normalized_value || p.raw_value || 0
-    dateMap[d].sum += val
-    dateMap[d].count += 1
-    dateMap[d].sources[p.source] = val
+    dateMap[p.date].sources[p.source] = val
   }
 
-  const historical = Object.entries(dateMap).sort(([a], [b]) => a.localeCompare(b)).map(([date, { sum, count, sources }]) => ({
-    date, value: Math.round((sum / count) * 10) / 10,
-    google: sources['google_trends'] || null, reddit: sources['reddit'] || null,
-  }))
+  const historical = Object.entries(dateMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, { sources }]) => ({
+      date: date.slice(0, 7), // YYYY-MM
+      google_trends: sources['google_trends'] ?? null,
+      reddit: sources['reddit'] ? Math.min(100, sources['reddit'] * 20) : null,
+      amazon_ba: sources['amazon_ba'] ? Math.max(0, 100 - (sources['amazon_ba'] / 50)) : null,
+      science: sources['science'] ?? null,
+    }))
+
+  // Aggregate by month
+  const monthMap: Record<string, { gt: number[]; rd: number[]; ba: number[]; sc: number[] }> = {}
+  for (const h of historical) {
+    if (!monthMap[h.date]) monthMap[h.date] = { gt: [], rd: [], ba: [], sc: [] }
+    if (h.google_trends !== null) monthMap[h.date].gt.push(h.google_trends)
+    if (h.reddit !== null) monthMap[h.date].rd.push(h.reddit)
+    if (h.amazon_ba !== null) monthMap[h.date].ba.push(h.amazon_ba)
+    if (h.science !== null) monthMap[h.date].sc.push(h.science)
+  }
+
+  const chartData = Object.entries(monthMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, d]) => ({
+      date: month,
+      'Google Trends': d.gt.length > 0 ? Math.round(d.gt.reduce((a, b) => a + b, 0) / d.gt.length) : null,
+      'Reddit Buzz': d.rd.length > 0 ? Math.round(d.rd.reduce((a, b) => a + b, 0) / d.rd.length) : null,
+      'Amazon Demand': d.ba.length > 0 ? Math.round(d.ba.reduce((a, b) => a + b, 0) / d.ba.length) : null,
+      'Science': d.sc.length > 0 ? Math.round(d.sc.reduce((a, b) => a + b, 0) / d.sc.length) : null,
+    }))
 
   const forecastData = (forecast?.forecasts || [])
     .filter((f: any) => f.yhat > 0)
     .sort((a: any, b: any) => a.forecast_date.localeCompare(b.forecast_date))
     .map((f: any) => ({
-      date: f.forecast_date,
-      yhat: Math.round(f.yhat * 10) / 10,
-      yhat_lower: Math.round((f.yhat_lower || 0) * 10) / 10,
-      yhat_upper: Math.round((f.yhat_upper || 0) * 10) / 10,
+      date: f.forecast_date.slice(0, 7),
+      forecast: Math.round(f.yhat * 10) / 10,
+      forecast_upper: Math.round((f.yhat_upper || 0) * 10) / 10,
+      forecast_lower: Math.round((f.yhat_lower || 0) * 10) / 10,
     }))
 
-  const lastHistorical = historical[historical.length - 1]
-  const chartData = [
-    ...historical.map(h => ({ ...h, yhat: null as number | null, yhat_lower: null as number | null, yhat_upper: null as number | null })),
-    ...(lastHistorical ? [{ date: lastHistorical.date, value: lastHistorical.value, google: null as number | null, reddit: null as number | null, yhat: lastHistorical.value, yhat_lower: lastHistorical.value, yhat_upper: lastHistorical.value }] : []),
-    ...forecastData.map(f => ({ date: f.date, value: null as number | null, google: null as number | null, reddit: null as number | null, yhat: f.yhat, yhat_lower: f.yhat_lower, yhat_upper: f.yhat_upper })),
+  const allData = [
+    ...chartData.map(h => ({ ...h, forecast: null as number | null, forecast_upper: null as number | null, forecast_lower: null as number | null })),
+    ...forecastData.map(f => ({ ...f, 'Google Trends': null, 'Reddit Buzz': null, 'Amazon Demand': null, 'Science': null })),
   ]
 
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const hasData = chartData.length > 0
 
   return (
-    <SectionCard title="Search Interest Over Time" subtitle="Historical trend data with forecast projection" accentColor={C.coral}>
-      <ResponsiveContainer width="100%" height={400}>
-        <ComposedChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke={C.borderLight} />
-          <XAxis dataKey="date" tick={{ fontSize: 11, fill: C.stone }} interval="preserveStartEnd" />
-          <YAxis tick={{ fontSize: 11, fill: C.stone }} domain={[0, 'auto']} />
-          <Tooltip contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12 }} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Area type="monotone" dataKey="value" name="Actual (avg)" stroke={C.coral} fill={C.coralLight} strokeWidth={2} dot={false} connectNulls={false} />
-          <Area type="monotone" dataKey="yhat_upper" name="Forecast CI" stroke="none" fill={C.coral} fillOpacity={0.08} dot={false} connectNulls={false} />
-          <Area type="monotone" dataKey="yhat_lower" stroke="none" fill={C.card} fillOpacity={1} dot={false} connectNulls={false} />
-          <Line type="monotone" dataKey="yhat" name="Forecast" stroke={C.coral} strokeWidth={2} strokeDasharray="6 3" dot={false} connectNulls={false} />
-          <ReferenceLine x={todayStr} stroke={C.sand} strokeDasharray="3 3" label={{ value: "Today", position: "top", fontSize: 11, fill: C.stone }} />
-        </ComposedChart>
-      </ResponsiveContainer>
-      {forecast && (
-        <p style={{ fontSize: 11, color: C.sand, marginTop: 8 }}>
-          Forecast: {forecast.model_version} · {forecastData.length} points · Generated: {new Date(forecast.generated_at).toLocaleDateString()}
-        </p>
+    <div className="space-y-6">
+      {/* Signal Timeline Chart */}
+      <div className="card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg text-charcoal-700" style={{ fontFamily: "'Newsreader', Georgia, serif", fontWeight: 400 }}>
+            Signal Timeline
+          </h3>
+          <div className="flex items-center gap-3 text-xs">
+            <span className="flex items-center gap-1"><span className="w-3 h-1 rounded bg-[#4285F4]" />Google Trends</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-1 rounded bg-[#FF5700]" />Reddit</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-1 rounded bg-[#FF9900]" />Amazon</span>
+            {chartData.some(d => d['Science'] !== null) && (
+              <span className="flex items-center gap-1"><span className="w-3 h-1 rounded bg-[#7C3AED]" />Science</span>
+            )}
+          </div>
+        </div>
+
+        {hasData ? (
+          <ResponsiveContainer width="100%" height={350}>
+            <ComposedChart data={allData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E6E1DA" />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#8B8479' }} />
+              <YAxis tick={{ fontSize: 11, fill: '#8B8479' }} domain={[0, 'auto']} />
+              <Tooltip contentStyle={{ background: '#fff', border: '1px solid #E6E1DA', borderRadius: 10, fontSize: 12 }} />
+              <Area type="monotone" dataKey="Google Trends" stroke="#4285F4" fill="#4285F433" strokeWidth={2} dot={false} connectNulls />
+              <Area type="monotone" dataKey="Reddit Buzz" stroke="#FF5700" fill="#FF570022" strokeWidth={2} dot={false} connectNulls />
+              <Area type="monotone" dataKey="Amazon Demand" stroke="#FF9900" fill="#FF990022" strokeWidth={2} dot={false} connectNulls />
+              {chartData.some(d => d['Science'] !== null) && (
+                <Bar dataKey="Science" fill="#7C3AED44" stroke="#7C3AED" barSize={8} />
+              )}
+              {forecastData.length > 0 && (
+                <Line type="monotone" dataKey="forecast" stroke="#E8714A" strokeWidth={2} strokeDasharray="6 3" dot={false} connectNulls />
+              )}
+            </ComposedChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-[350px] flex items-center justify-center text-sand-500">
+            <div className="text-center">
+              <BarChart3 className="h-10 w-10 mx-auto mb-3 text-sand-400" />
+              <p className="text-sm font-medium">No timeseries data yet</p>
+              <p className="text-xs text-sand-400 mt-1">Data will appear after ingestion pipelines run</p>
+            </div>
+          </div>
+        )}
+
+        {forecast && (
+          <p className="text-xs text-sand-500 mt-2">
+            Forecast: {forecast.model_version} · {forecastData.length} points · Generated: {new Date(forecast.generated_at).toLocaleDateString()}
+          </p>
+        )}
+      </div>
+
+      {/* Source counts summary */}
+      {hasData && (
+        <div className="grid grid-cols-4 gap-4">
+          {[
+            { label: 'Google Trends', count: chartData.filter(d => d['Google Trends'] !== null).length, color: '#4285F4', latest: chartData.filter(d => d['Google Trends'] !== null).pop()?.['Google Trends'] },
+            { label: 'Reddit', count: chartData.filter(d => d['Reddit Buzz'] !== null).length, color: '#FF5700', latest: chartData.filter(d => d['Reddit Buzz'] !== null).pop()?.['Reddit Buzz'] },
+            { label: 'Amazon BA', count: chartData.filter(d => d['Amazon Demand'] !== null).length, color: '#FF9900', latest: chartData.filter(d => d['Amazon Demand'] !== null).pop()?.['Amazon Demand'] },
+            { label: 'Science', count: chartData.filter(d => d['Science'] !== null).length, color: '#7C3AED', latest: chartData.filter(d => d['Science'] !== null).pop()?.['Science'] },
+          ].map(s => (
+            <div key={s.label} className="card p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-2 h-2 rounded-full" style={{ background: s.color }} />
+                <span className="text-xs text-sand-600 font-medium uppercase">{s.label}</span>
+              </div>
+              <p className="text-xl font-bold text-charcoal-700">{s.count > 0 ? `${s.count} pts` : '—'}</p>
+              {s.latest !== undefined && s.latest !== null && (
+                <p className="text-xs text-sand-500 mt-0.5">Latest: {Math.round(s.latest)}</p>
+              )}
+            </div>
+          ))}
+        </div>
       )}
-    </SectionCard>
+    </div>
   )
 }
 
-
-/* ─── Competition Tab ─── */
+// ─── Competition Tab ───
 function CompetitionTab({ topicId }: { topicId: string }) {
   const { data: comp } = useCompetition(topicId)
-  if (!comp) return <div style={{ color: C.sand, padding: 20 }}>Loading competition data...</div>
-
-  const metrics = [
-    { label: 'Listings', value: comp.listing_count },
-    { label: 'Median Price', value: comp.median_price ? `$${comp.median_price.toFixed(0)}` : '—' },
-    { label: 'Median Reviews', value: comp.median_reviews },
-    { label: 'Avg Rating', value: comp.avg_rating ? `${comp.avg_rating.toFixed(1)} ★` : '—' },
-    { label: 'Brand Count', value: comp.brand_count },
-    { label: 'Top 3 Share', value: comp.top3_brand_share ? `${(comp.top3_brand_share * 100).toFixed(0)}%` : '—' },
-  ]
+  if (!comp) return <div className="text-sand-500 py-8 text-center">Loading competition data...</div>
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
-        {metrics.map(m => (
-          <div key={m.label} style={{ background: C.card, borderRadius: 12, padding: '16px 18px', border: `1px solid ${C.border}` }}>
-            <div style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>{m.label}</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: C.ink, marginTop: 4, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums' }}>{m.value ?? '—'}</div>
+    <div className="space-y-6">
+      <div className="grid grid-cols-4 gap-4">
+        {[
+          { label: 'Listings', value: comp.listing_count },
+          { label: 'Median Price', value: comp.median_price ? `$${comp.median_price}` : '—' },
+          { label: 'Median Reviews', value: comp.median_reviews },
+          { label: 'Avg Rating', value: comp.avg_rating ? `${comp.avg_rating} ★` : '—' },
+        ].map(m => (
+          <div key={m.label} className="card p-4">
+            <p className="text-xs text-sand-600 uppercase">{m.label}</p>
+            <p className="text-xl font-bold mt-1 text-charcoal-700">{m.value ?? '—'}</p>
           </div>
         ))}
       </div>
 
       {comp.top_asins?.length > 0 && (
-        <SectionCard title="Top Competing Products" subtitle={`${comp.top_asins.length} products analyzed`}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="card p-6">
+          <h3 className="text-lg text-charcoal-700 mb-4" style={{ fontFamily: "'Newsreader', Georgia, serif", fontWeight: 400 }}>
+            Top Competing Products
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
             {comp.top_asins.map((a: any) => (
-              <div key={a.asin} style={{
-                display: 'flex', gap: 12, padding: '14px 16px', borderRadius: 10,
-                border: `1px solid ${C.border}`, background: C.bg,
-              }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, lineClamp: 2, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}>
-                    {a.title || a.asin}
-                  </div>
-                  <div style={{ fontSize: 11, color: C.stone, marginTop: 4 }}>
-                    {a.brand} · ${a.price} · {a.rating}★ · {a.review_count?.toLocaleString()} reviews
-                  </div>
+              <div key={a.asin} className="flex gap-3 p-3 border border-sand-300 rounded-lg hover:bg-sand-50 transition-colors">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-charcoal-700 line-clamp-2">{a.title || a.asin}</p>
+                  <p className="text-xs text-sand-500 mt-1">{a.brand} · ${a.price} · {a.rating}★ · {a.review_count} reviews</p>
                 </div>
-                <span style={{ fontSize: 11, color: C.sand, fontWeight: 600 }}>#{a.rank}</span>
+                <span className="text-xs text-sand-400 font-medium">#{a.rank}</span>
               </div>
             ))}
           </div>
-        </SectionCard>
+        </div>
       )}
     </div>
   )
 }
 
-
-/* ─── Reviews Tab ─── */
+// ─── Reviews Tab ───
 function ReviewsTab({ topicId }: { topicId: string }) {
   const { data: reviews } = useReviewsSummary(topicId)
-  if (!reviews) return <div style={{ color: C.sand, padding: 20 }}>Loading review insights...</div>
+  if (!reviews) return <div className="text-sand-500 py-8 text-center">Loading review insights...</div>
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ fontSize: 12, color: C.stone }}>
-        Analyzed {reviews.total_reviews_analyzed?.toLocaleString()} reviews across {reviews.asins_covered} products
+    <div className="space-y-6">
+      <div className="text-sm text-sand-600">
+        Analyzed {reviews.total_reviews_analyzed} reviews across {reviews.asins_covered} products
       </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <SectionCard title="✓ Top Pros" accentColor={C.sage}>
-          {reviews.pros.map((p: any, i: number) => (
-            <div key={i} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: i < reviews.pros.length - 1 ? `1px solid ${C.borderLight}` : 'none' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: C.ink, textTransform: 'capitalize' }}>{p.aspect.replace('_', ' ')}</span>
-                <span style={{ fontSize: 11, color: C.stone }}>{p.mention_count} mentions</span>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold text-sage-400 mb-4">✓ Top Pros</h3>
+          {(reviews.pros || []).map((p: any, i: number) => (
+            <div key={i} className="mb-3 pb-3 border-b border-sand-200 last:border-0">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-sm capitalize text-charcoal-700">{p.aspect?.replace('_', ' ')}</span>
+                <span className="text-xs text-sand-500">{p.mention_count} mentions</span>
               </div>
-              {p.sample && <p style={{ fontSize: 11, color: C.sand, marginTop: 3, fontStyle: 'italic' }}>"{p.sample}"</p>}
+              {p.sample && <p className="text-xs text-sand-400 mt-1 italic">"{p.sample}"</p>}
             </div>
           ))}
-        </SectionCard>
+          {(!reviews.pros || reviews.pros.length === 0) && <p className="text-sm text-sand-400 text-center py-4">No pro insights yet</p>}
+        </div>
 
-        <SectionCard title="✗ Top Cons" accentColor={C.rose}>
-          {reviews.cons.map((c: any, i: number) => (
-            <div key={i} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: i < reviews.cons.length - 1 ? `1px solid ${C.borderLight}` : 'none' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: C.ink, textTransform: 'capitalize' }}>{c.aspect.replace('_', ' ')}</span>
-                <span style={{ fontSize: 11, color: C.stone }}>{c.mention_count} mentions</span>
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold text-rose-400 mb-4">✗ Top Cons</h3>
+          {(reviews.cons || []).map((c: any, i: number) => (
+            <div key={i} className="mb-3 pb-3 border-b border-sand-200 last:border-0">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-sm capitalize text-charcoal-700">{c.aspect?.replace('_', ' ')}</span>
+                <span className="text-xs text-sand-500">{c.mention_count} mentions</span>
               </div>
-              {c.sample && <p style={{ fontSize: 11, color: C.sand, marginTop: 3, fontStyle: 'italic' }}>"{c.sample}"</p>}
+              {c.sample && <p className="text-xs text-sand-400 mt-1 italic">"{c.sample}"</p>}
             </div>
           ))}
-        </SectionCard>
+          {(!reviews.cons || reviews.cons.length === 0) && <p className="text-sm text-sand-400 text-center py-4">No con insights yet</p>}
+        </div>
       </div>
 
       {reviews.top_pain_points?.length > 0 && (
-        <SectionCard title="🔥 Top Pain Points">
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold text-charcoal-700 mb-4">🔥 Top Pain Points</h3>
           {reviews.top_pain_points.map((pp: any, i: number) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-              <div style={{ width: 80, height: 6, borderRadius: 3, background: C.borderLight, overflow: 'hidden', flexShrink: 0 }}>
-                <div style={{ width: `${pp.severity}%`, height: '100%', borderRadius: 3, background: C.rose }} />
+            <div key={i} className="flex items-center gap-4 mb-3">
+              <div className="w-20 h-2 bg-sand-200 rounded-full overflow-hidden">
+                <div className="h-full bg-rose-400 rounded-full" style={{ width: `${pp.severity}%` }} />
               </div>
-              <span style={{ fontSize: 13, fontWeight: 500, color: C.ink, textTransform: 'capitalize', flex: 1 }}>
-                {pp.aspect.replace('_', ' ')}
-              </span>
-              <span style={{ fontSize: 11, color: C.stone }}>{pp.evidence}</span>
+              <span className="text-sm font-medium capitalize flex-1 text-charcoal-700">{pp.aspect?.replace('_', ' ')}</span>
+              <span className="text-xs text-sand-500">{pp.evidence}</span>
             </div>
           ))}
-        </SectionCard>
+        </div>
       )}
     </div>
   )
 }
 
-
-/* ─── Gen-Next Spec Tab ─── */
+// ─── Gen-Next Tab ───
 function GenNextTab({ topicId }: { topicId: string }) {
   const { data: spec, isLoading, error } = useGenNextSpec(topicId)
-  if (isLoading) return <div style={{ color: C.sand, padding: 20 }}>Loading Gen-Next spec...</div>
-  if (error) return (
-    <SectionCard title="Gen-Next Product Specification">
-      <div style={{ textAlign: 'center', padding: 20, color: C.stone, fontSize: 13 }}>
-        Gen-Next spec not available. Upgrade to Pro for AI-generated product specifications.
-      </div>
-    </SectionCard>
-  )
+  if (isLoading) return <div className="text-sand-500 py-8 text-center">Loading Gen-Next spec...</div>
+  if (error) return <div className="card p-6 text-center text-sand-500">Gen-Next spec not available for this topic.</div>
   if (!spec) return null
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ fontSize: 11, color: C.sand }}>
-        Version {spec.version} · Generated {new Date(spec.generated_at).toLocaleDateString()} · Model: {spec.model_used}
-      </div>
+    <div className="space-y-6">
+      <p className="text-xs text-sand-500">Version {spec.version} · Generated {new Date(spec.generated_at).toLocaleDateString()} · Model: {spec.model_used}</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <SectionCard title="🔧 Must Fix" accentColor={C.rose}>
-          {spec.must_fix.map((item: any, i: number) => (
-            <div key={i} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: i < spec.must_fix.length - 1 ? `1px solid ${C.borderLight}` : 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{
-                  fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
-                  background: item.severity === 'critical' ? C.roseLight : C.amberLight,
-                  color: item.severity === 'critical' ? C.rose : C.amber,
-                }}>{item.severity}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{item.issue}</span>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold text-rose-400 mb-4">🔧 Must Fix</h3>
+          {(spec.must_fix || []).map((item: any, i: number) => (
+            <div key={i} className="mb-3 pb-3 border-b border-sand-200 last:border-0">
+              <div className="flex items-center gap-2">
+                <span className={clsx('text-xs px-2 py-0.5 rounded-full font-medium',
+                  item.severity === 'critical' ? 'bg-rose-50 text-rose-400' : 'bg-amber-50 text-amber-400'
+                )}>{item.severity}</span>
+                <span className="text-sm font-medium text-charcoal-700">{item.issue}</span>
               </div>
-              <p style={{ fontSize: 11, color: C.stone, marginTop: 3 }}>{item.evidence}</p>
-            </div>
-          ))}
-        </SectionCard>
-
-        <SectionCard title="✨ Must Add" accentColor={C.sage}>
-          {spec.must_add.map((item: any, i: number) => (
-            <div key={i} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: i < spec.must_add.length - 1 ? `1px solid ${C.borderLight}` : 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 8, background: C.coralLight, color: C.coral }}>
-                  P{item.priority}
-                </span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{item.feature}</span>
-              </div>
-              <p style={{ fontSize: 11, color: C.stone, marginTop: 3 }}>{item.demand_signal}</p>
-            </div>
-          ))}
-        </SectionCard>
-      </div>
-
-      <SectionCard title="💡 Differentiators" accentColor={C.plum}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {spec.differentiators.map((d: any, i: number) => (
-            <div key={i} style={{ padding: '14px 16px', borderRadius: 10, background: C.plumLight }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{d.idea}</div>
-              <div style={{ fontSize: 11, color: C.stone, marginTop: 3 }}>{d.rationale}</div>
+              <p className="text-xs text-sand-500 mt-1">{item.evidence}</p>
             </div>
           ))}
         </div>
-      </SectionCard>
 
-      <SectionCard title="🎯 Positioning">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
-          {spec.positioning.target_price && (
-            <div>
-              <div style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase', fontWeight: 600 }}>Target Price</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: C.ink, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>${spec.positioning.target_price}</div>
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold text-sage-400 mb-4">✨ Must Add</h3>
+          {(spec.must_add || []).map((item: any, i: number) => (
+            <div key={i} className="mb-3 pb-3 border-b border-sand-200 last:border-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs bg-coral-100 text-coral-500 px-2 py-0.5 rounded-full font-medium">P{item.priority}</span>
+                <span className="text-sm font-medium text-charcoal-700">{item.feature}</span>
+              </div>
+              <p className="text-xs text-sand-500 mt-1">{item.demand_signal}</p>
             </div>
-          )}
-          {spec.positioning.target_rating && (
-            <div>
-              <div style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase', fontWeight: 600 }}>Target Rating</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: C.amber, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>{spec.positioning.target_rating} ★</div>
-            </div>
-          )}
-          {spec.positioning.tagline && (
-            <div style={{ gridColumn: 'span 2' }}>
-              <div style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase', fontWeight: 600 }}>Tagline</div>
-              <div style={{ fontSize: 16, fontWeight: 600, fontStyle: 'italic', color: C.ink, marginTop: 4 }}>"{spec.positioning.tagline}"</div>
-            </div>
-          )}
-          {spec.positioning.target_demographic && (
-            <div style={{ gridColumn: 'span 4' }}>
-              <div style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase', fontWeight: 600 }}>Target Demographic</div>
-              <div style={{ fontSize: 13, color: C.ink, marginTop: 4 }}>{spec.positioning.target_demographic}</div>
-            </div>
-          )}
+          ))}
         </div>
-      </SectionCard>
+      </div>
+
+      {spec.differentiators?.length > 0 && (
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold text-charcoal-700 mb-4">💡 Differentiators</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {spec.differentiators.map((d: any, i: number) => (
+              <div key={i} className="p-4 bg-sand-50 rounded-lg border border-sand-200">
+                <p className="font-medium text-sm text-charcoal-700">{d.idea}</p>
+                <p className="text-xs text-sand-500 mt-1">{d.rationale}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {spec.positioning && (
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold text-charcoal-700 mb-4">🎯 Positioning</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {spec.positioning.target_price && <div><p className="text-xs text-sand-500">Target Price</p><p className="text-lg font-bold text-charcoal-700">${spec.positioning.target_price}</p></div>}
+            {spec.positioning.target_rating && <div><p className="text-xs text-sand-500">Target Rating</p><p className="text-lg font-bold text-charcoal-700">{spec.positioning.target_rating} ★</p></div>}
+            {spec.positioning.tagline && <div className="col-span-2"><p className="text-xs text-sand-500">Tagline</p><p className="text-lg font-semibold italic text-charcoal-700">"{spec.positioning.tagline}"</p></div>}
+            {spec.positioning.target_demographic && <div className="col-span-2"><p className="text-xs text-sand-500">Target Demographic</p><p className="text-sm text-charcoal-700">{spec.positioning.target_demographic}</p></div>}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-
-/* ─── Social Signals Tab ─── */
+// ─── Social Signals Tab ───
 function SocialSignalsTab({ topicId }: { topicId: string }) {
   const [signals, setSignals] = useState<any>(null)
   const [complaints, setComplaints] = useState<any[]>([])
@@ -821,71 +558,71 @@ function SocialSignalsTab({ topicId }: { topicId: string }) {
     ]).finally(() => setLoading(false))
   }, [topicId])
 
-  if (loading) return <div style={{ color: C.sand, padding: 20, textAlign: 'center' }}>Loading social signals...</div>
+  if (loading) return <div className="text-sand-500 py-8 text-center">Loading social signals...</div>
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="space-y-6">
       {signals && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-          {[
-            { label: 'Instagram', value: signals.instagram_posts, sub: `${signals.instagram_engagement?.toLocaleString()} engagement`, color: '#E1306C' },
-            { label: 'TikTok', value: signals.tiktok_videos, sub: `${signals.tiktok_views?.toLocaleString()} views`, color: '#00f2ea' },
-            { label: 'Reddit', value: signals.reddit_mentions, sub: 'mentions', color: '#FF4500' },
-            { label: 'Brand Mentions', value: signals.total_brand_mentions, sub: signals.avg_mention_sentiment > 0 ? `↑ ${(signals.avg_mention_sentiment * 100).toFixed(0)}% sentiment` : `↓ ${Math.abs(signals.avg_mention_sentiment * 100).toFixed(0)}% sentiment`, color: C.charcoal },
-          ].map(m => (
-            <div key={m.label} style={{ background: C.card, borderRadius: 12, padding: '18px 20px', border: `1px solid ${C.border}` }}>
-              <div style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>{m.label}</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: m.color, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>{m.value}</div>
-              <div style={{ fontSize: 10, color: C.sand, marginTop: 2 }}>{m.sub}</div>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="card p-4"><p className="text-xs text-sand-600 uppercase mb-1">Instagram</p><p className="text-xl font-bold text-pink-500">{signals.instagram_posts}</p><p className="text-[10px] text-sand-500">{signals.instagram_engagement?.toLocaleString()} engagement</p></div>
+          <div className="card p-4"><p className="text-xs text-sand-600 uppercase mb-1">TikTok</p><p className="text-xl font-bold text-cyan-500">{signals.tiktok_videos}</p><p className="text-[10px] text-sand-500">{signals.tiktok_views?.toLocaleString()} views</p></div>
+          <div className="card p-4"><p className="text-xs text-sand-600 uppercase mb-1">Reddit</p><p className="text-xl font-bold text-orange-500">{signals.reddit_mentions}</p><p className="text-[10px] text-sand-500">mentions</p></div>
+          <div className="card p-4"><p className="text-xs text-sand-600 uppercase mb-1">Brand Mentions</p><p className="text-xl font-bold text-charcoal-700">{signals.total_brand_mentions}</p>
+            {signals.avg_mention_sentiment !== null && (
+              <p className={clsx('text-[10px]', signals.avg_mention_sentiment > 0 ? 'text-sage-400' : 'text-rose-400')}>
+                {signals.avg_mention_sentiment > 0 ? '↑' : '↓'} {(signals.avg_mention_sentiment * 100).toFixed(0)}% sentiment
+              </p>
+            )}
+          </div>
         </div>
       )}
 
-      <SectionCard title="Complaint Themes" subtitle={`${complaints.length} clusters detected`} icon={<AlertTriangle style={{ width: 14, height: 14, color: C.rose }} />} accentColor={C.rose}>
-        {complaints.length > 0 ? complaints.map((c: any) => (
-          <div key={c.cluster_id} style={{
-            padding: '12px 14px', borderRadius: 10, marginBottom: 6,
-            background: C.roseLight, borderLeft: `3px solid ${C.rose}`,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{c.label}</span>
-              <span style={{ fontSize: 11, color: C.stone }}>{c.size} mentions</span>
-            </div>
-            {c.representative_texts?.slice(0, 2).map((text: string, i: number) => (
-              <p key={i} style={{ fontSize: 11, color: C.slate, fontStyle: 'italic', marginTop: 2 }}>"{text}"</p>
+      <div className="card p-5">
+        <h3 className="text-sm font-semibold text-charcoal-700 uppercase mb-4 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-rose-400" /> Complaint Themes ({complaints.length})
+        </h3>
+        {complaints.length > 0 ? (
+          <div className="space-y-3">
+            {complaints.map((c: any) => (
+              <div key={c.cluster_id} className="p-3 rounded-lg bg-sand-50 border-l-2 border-rose-400">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-medium text-charcoal-700">{c.label}</p>
+                  <span className="text-xs text-sand-500">{c.size} mentions</span>
+                </div>
+                {c.representative_texts?.slice(0, 2).map((text: string, i: number) => (
+                  <p key={i} className="text-xs text-sand-500 mt-1 italic">"{text}"</p>
+                ))}
+              </div>
             ))}
           </div>
-        )) : (
-          <div style={{ fontSize: 12, color: C.sand, textAlign: 'center', padding: 16 }}>
-            No complaint clusters found — data will appear after NLP pipeline runs
-          </div>
+        ) : (
+          <p className="text-sm text-sand-500 text-center py-4">No complaint clusters found — data appears after NLP pipeline runs</p>
         )}
-      </SectionCard>
+      </div>
 
-      <SectionCard title="Feature Requests" subtitle={`${featureRequests.length} requests detected`} icon={<Lightbulb style={{ width: 14, height: 14, color: C.plum }} />} accentColor={C.plum}>
-        {featureRequests.length > 0 ? featureRequests.map((fr: any) => (
-          <div key={fr.id} style={{
-            display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px',
-            borderRadius: 10, marginBottom: 4, background: C.plumLight,
-          }}>
-            <Lightbulb style={{ width: 14, height: 14, color: C.plum, marginTop: 2, flexShrink: 0 }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{fr.aspect}</div>
-              {fr.evidence && <p style={{ fontSize: 11, color: C.slate, marginTop: 2, fontStyle: 'italic' }}>"{fr.evidence}"</p>}
-            </div>
-            {fr.review_stars && (
-              <span style={{ fontSize: 11, color: C.amber, flexShrink: 0 }}>
-                {'★'.repeat(fr.review_stars)}{'☆'.repeat(5 - fr.review_stars)}
-              </span>
-            )}
+      <div className="card p-5">
+        <h3 className="text-sm font-semibold text-charcoal-700 uppercase mb-4 flex items-center gap-2">
+          <Lightbulb className="h-4 w-4 text-blue-400" /> Feature Requests ({featureRequests.length})
+        </h3>
+        {featureRequests.length > 0 ? (
+          <div className="space-y-2">
+            {featureRequests.map((fr: any) => (
+              <div key={fr.id} className="flex items-start gap-3 p-3 rounded-lg bg-sand-50">
+                <Lightbulb className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-charcoal-700 font-medium">{fr.aspect}</p>
+                  {fr.evidence && <p className="text-xs text-sand-500 mt-1 italic">"{fr.evidence}"</p>}
+                </div>
+                {fr.review_stars && (
+                  <span className="text-xs text-amber-400 flex-shrink-0">{'★'.repeat(fr.review_stars)}{'☆'.repeat(5 - fr.review_stars)}</span>
+                )}
+              </div>
+            ))}
           </div>
-        )) : (
-          <div style={{ fontSize: 12, color: C.sand, textAlign: 'center', padding: 16 }}>
-            No feature requests detected yet
-          </div>
+        ) : (
+          <p className="text-sm text-sand-500 text-center py-4">No feature requests detected yet</p>
         )}
-      </SectionCard>
+      </div>
     </div>
   )
 }

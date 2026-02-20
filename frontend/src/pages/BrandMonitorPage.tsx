@@ -4,11 +4,11 @@ import { brandsApi } from '../lib/api'
 import { ArrowLeft, Search, Building2, TrendingUp, TrendingDown, Minus, MessageCircle, ChevronRight } from 'lucide-react'
 
 const C = {
-  bg: '#F9F7F4', card: '#FFFFFF', border: '#E6E1DA', borderLight: '#F0ECE6',
-  coral: '#E8714A', coralLight: '#FCEEE8', sage: '#1A8754', sageLight: '#E8F5EE',
-  amber: '#D4930D', amberLight: '#FFF8E6', rose: '#C0392B', roseLight: '#FFF0F0',
-  plum: '#7C3AED', charcoal: '#2D3E50', charcoalDeep: '#1A2A3A',
-  ink: '#2A2520', slate: '#5C5549', stone: '#8B8479', sand: '#B8B2A8',
+  bg: '#F8FAFC', card: '#FFFFFF', border: '#E2E8F0', borderLight: '#F1F5F9',
+  coral: '#E16A4A', coralLight: '#FEF0EB', sage: '#2ED3A5', sageLight: '#EAFAF5',
+  amber: '#FFC857', amberLight: '#FFF8E6', rose: '#EF4444', roseLight: '#FEF2F2',
+  plum: '#6B4EFF', charcoal: '#2C5282', charcoalDeep: '#1E3A5F',
+  ink: '#0F172A', slate: '#475569', stone: '#64748B', sand: '#94A3B8',
 }
 
 function SentimentBadge({ value }: { value: number | null }) {
@@ -44,11 +44,11 @@ function BrandListView() {
   }, [search])
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif", color: C.ink }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Inter', -apple-system, sans-serif", color: C.ink }}>
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
           <Building2 style={{ width: 22, height: 22, color: C.charcoal }} />
-          <h1 style={{ fontSize: 28, fontWeight: 400, margin: 0, color: C.charcoalDeep, fontFamily: "'Newsreader', Georgia, serif" }}>Brand Monitor</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: C.charcoalDeep, fontFamily: "'Sora', sans-serif" }}>Brand Monitor</h1>
         </div>
         <p style={{ fontSize: 13, color: C.stone, marginLeft: 32 }}>{brands.length} brands tracked</p>
       </div>
@@ -128,7 +128,7 @@ function BrandDetailView() {
   if (!brand) return <div style={{ padding: 24, color: C.rose }}>Brand not found</div>
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif", color: C.ink }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Inter', -apple-system, sans-serif", color: C.ink }}>
       <button onClick={() => navigate('/brands')} style={{
         display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: C.stone,
         background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 16,
@@ -141,7 +141,7 @@ function BrandDetailView() {
           <span style={{ fontSize: 22, fontWeight: 700, color: C.charcoal }}>{brand.name[0]}</span>
         </div>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 400, margin: 0, color: C.charcoalDeep, fontFamily: "'Newsreader', Georgia, serif" }}>{brand.name}</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: C.charcoalDeep, fontFamily: "'Sora', sans-serif" }}>{brand.name}</h1>
           <p style={{ fontSize: 13, color: C.stone, margin: '4px 0 0' }}>
             {brand.category_name || 'Uncategorized'}
             {brand.website && <> · <a href={brand.website} target="_blank" rel="noreferrer" style={{ color: C.coral }}>{brand.website}</a></>}

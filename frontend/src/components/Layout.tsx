@@ -5,64 +5,54 @@ import {
   Building2, Map, Microscope, Sparkles, Eye, Bell, Settings,
   Compass, Target, FileText, Activity
 } from 'lucide-react'
+import NotificationBell from './NotificationBell'
 
-const C = {
-  sidebarBg: '#1A2A3A',
-  sidebarDark: '#111D29',
-  coral: '#E8714A',
-  coralGlow: 'rgba(232,113,74,0.18)',
-  textActive: '#FFFFFF',
-  textDefault: '#8B9DB0',
-  textMuted: '#5F7590',
-  sectionLabel: '#5F7590',
+// NeuraNest brand sidebar tokens
+const S = {
+  bg: '#0F172A',   // Dark navy — Deep Intelligence Blue base
+  bgInner: '#0A111E',   // Slightly deeper for header area
+  orange: '#E16A4A',   // Neural Orange — active accent
+  orangeGlow: 'rgba(225,106,74,0.13)',
   borderSubtle: 'rgba(255,255,255,0.06)',
+  textActive: '#FFFFFF',
+  textDefault: '#94A3B8',
+  textMuted: '#64748B',
+  sectionLabel: '#475569',
 }
 
-interface NavItem {
-  to: string
-  label: string
-  icon: any
-}
-
-interface NavSection {
-  label: string
-  icon: any
-  items: NavItem[]
-}
+interface NavItem { to: string; label: string; icon: any }
+interface NavSection { label: string; icon: any; items: NavItem[] }
 
 const navSections: NavSection[] = [
   {
-    label: 'Discover',
-    icon: Compass,
+    label: 'Discover', icon: Compass,
     items: [
-      { to: '/dashboard',  label: 'Dashboard',     icon: LayoutDashboard },
-      { to: '/explore',    label: 'Trend Explorer', icon: Search },
-      { to: '/science',    label: 'Science Radar',  icon: Microscope },
+      { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { to: '/explore', label: 'Trend Explorer', icon: Search },
+      { to: '/science', label: 'Science Radar', icon: Microscope },
     ],
   },
   {
-    label: 'Analyze',
-    icon: Activity,
+    label: 'Analyze', icon: Activity,
     items: [
-      { to: '/categories', label: 'Categories',    icon: Grid3X3 },
-      { to: '/brands',     label: 'Competition',   icon: Building2 },
-      { to: '/whitespace', label: 'White Space',   icon: Map },
-      { to: '/amazon-ba',  label: 'Amazon BA',     icon: BarChart3 },
+      { to: '/categories', label: 'Categories', icon: Grid3X3 },
+      { to: '/brands', label: 'Competition', icon: Building2 },
+      { to: '/whitespace', label: 'White Space', icon: Map },
+      { to: '/amazon-ba', label: 'Amazon BA', icon: BarChart3 },
     ],
   },
   {
-    label: 'Decide',
-    icon: Target,
+    label: 'Decide', icon: Target,
     items: [
       { to: '/product-intelligence', label: 'Product Intel', icon: Sparkles },
+      { to: '/product-brief', label: 'Product Brief', icon: FileText },
     ],
   },
   {
-    label: 'Monitor',
-    icon: Eye,
+    label: 'Monitor', icon: Eye,
     items: [
-      { to: '/watchlist',  label: 'Watchlist',     icon: Eye },
-      { to: '/alerts',     label: 'Alerts',        icon: Bell },
+      { to: '/watchlist', label: 'Watchlist', icon: Eye },
+      { to: '/alerts', label: 'Alerts', icon: Bell },
     ],
   },
 ]
@@ -74,20 +64,21 @@ function NavItemLink({ item }: { item: NavItem }) {
       style={({ isActive }) => ({
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
-        padding: '8px 12px 8px 28px',
-        borderRadius: 8,
+        gap: 9,
+        padding: '7px 10px 7px 26px',
+        borderRadius: 6,
         fontSize: 13,
-        fontWeight: isActive ? 600 : 500,
+        fontFamily: "'Inter', sans-serif",
+        fontWeight: isActive ? 600 : 400,
         textDecoration: 'none',
         transition: 'all 0.15s ease',
-        background: isActive ? C.coralGlow : 'transparent',
-        color: isActive ? C.textActive : C.textDefault,
-        borderLeft: isActive ? `3px solid ${C.coral}` : '3px solid transparent',
-        marginLeft: -3,
+        background: isActive ? S.orangeGlow : 'transparent',
+        color: isActive ? S.textActive : S.textDefault,
+        borderLeft: isActive ? `2px solid ${S.orange}` : '2px solid transparent',
+        marginLeft: -2,
       })}
     >
-      <item.icon style={{ width: 16, height: 16, flexShrink: 0 }} />
+      <item.icon style={{ width: 15, height: 15, flexShrink: 0, strokeWidth: 1.75 }} />
       {item.label}
     </NavLink>
   )
@@ -103,64 +94,70 @@ export default function Layout() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#F9F7F4' }}>
-      {/* Sidebar */}
+    <div style={{ display: 'flex', height: '100vh', background: '#F8FAFC', fontFamily: "'Inter', sans-serif" }}>
+      {/* ── Sidebar ── */}
       <aside style={{
-        width: 240,
+        width: 232,
         display: 'flex',
         flexDirection: 'column',
-        background: C.sidebarBg,
+        background: S.bg,
         borderRight: '1px solid rgba(255,255,255,0.04)',
         flexShrink: 0,
       }}>
         {/* Logo */}
-        <div style={{ padding: '20px 20px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: 8, display: 'flex',
-            alignItems: 'center', justifyContent: 'center', background: C.coral,
-          }}>
-            <BarChart3 style={{ width: 18, height: 18, color: '#fff' }} />
-          </div>
-          <div>
-            <h1 style={{
-              fontSize: 17, fontWeight: 500, margin: 0, color: '#fff',
-              fontFamily: "'Newsreader', Georgia, serif",
+        <div style={{
+          padding: '18px 16px 14px',
+          background: S.bgInner,
+          borderBottom: `1px solid ${S.borderSubtle}`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+              background: 'linear-gradient(135deg, #E16A4A 0%, #6B4EFF 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              NeuraNest
-            </h1>
-            <p style={{ fontSize: 10, margin: 0, color: C.textMuted, letterSpacing: '0.04em' }}>
-              Trend Intelligence
-            </p>
+              <BarChart3 style={{ width: 16, height: 16, color: '#fff', strokeWidth: 2 }} />
+            </div>
+            <div>
+              <div style={{
+                fontSize: 15, fontWeight: 700, color: '#FFFFFF', lineHeight: 1.2,
+                fontFamily: "'Sora', sans-serif", letterSpacing: '-0.01em',
+              }}>
+                NeuraNest
+              </div>
+              <div style={{ fontSize: 10, color: S.textMuted, letterSpacing: '0.05em', marginTop: 1 }}>
+                TREND INTELLIGENCE
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Navigation sections */}
-        <nav style={{ flex: 1, padding: '4px 12px', overflowY: 'auto' }}>
+        {/* Navigation */}
+        <nav style={{ flex: 1, padding: '8px 10px', overflowY: 'auto' }}>
           {navSections.map((section, si) => (
-            <div key={section.label} style={{ marginBottom: 16 }}>
+            <div key={section.label} style={{ marginBottom: 4 }}>
               {/* Section header */}
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 12px 6px 8px',
-                fontSize: 10, fontWeight: 700, color: C.sectionLabel,
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '8px 10px 4px 8px',
+                fontSize: 9, fontWeight: 700, color: S.sectionLabel,
                 textTransform: 'uppercase', letterSpacing: '0.1em',
+                fontFamily: "'Inter', sans-serif",
               }}>
-                <section.icon style={{ width: 11, height: 11 }} />
+                <section.icon style={{ width: 10, height: 10, strokeWidth: 2 }} />
                 {section.label}
               </div>
 
-              {/* Section items */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {section.items.map(item => (
                   <NavItemLink key={item.to} item={item} />
                 ))}
               </div>
 
-              {/* Divider between sections */}
               {si < navSections.length - 1 && (
                 <div style={{
-                  height: 1, background: C.borderSubtle,
-                  margin: '12px 12px 0',
+                  height: 1, background: S.borderSubtle,
+                  margin: '8px 8px 4px',
                 }} />
               )}
             </div>
@@ -168,66 +165,71 @@ export default function Layout() {
         </nav>
 
         {/* Settings */}
-        <div style={{ padding: '0 12px 8px' }}>
+        <div style={{ padding: '0 10px 6px' }}>
           <NavLink
             to="/settings"
             style={({ isActive }) => ({
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '8px 12px',
-              borderRadius: 8, fontSize: 13, fontWeight: 500,
+              display: 'flex', alignItems: 'center', gap: 9,
+              padding: '7px 10px',
+              borderRadius: 6, fontSize: 13, fontWeight: isActive ? 600 : 400,
+              fontFamily: "'Inter', sans-serif",
               textDecoration: 'none', transition: 'all 0.15s',
-              background: isActive ? C.coralGlow : 'transparent',
-              color: isActive ? C.textActive : C.textMuted,
+              background: isActive ? S.orangeGlow : 'transparent',
+              color: isActive ? S.textActive : S.textMuted,
             })}
           >
-            <Settings style={{ width: 16, height: 16 }} />
+            <Settings style={{ width: 15, height: 15, strokeWidth: 1.75 }} />
             Settings
           </NavLink>
         </div>
 
         {/* User footer */}
         <div style={{
-          padding: '12px 16px',
-          borderTop: `1px solid ${C.borderSubtle}`,
+          padding: '10px 14px',
+          borderTop: `1px solid ${S.borderSubtle}`,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <div style={{ minWidth: 0 }}>
-            <p style={{
-              fontSize: 12, fontWeight: 500, margin: 0, color: 'rgba(255,255,255,0.9)',
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{
+              fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.85)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              fontFamily: "'Inter', sans-serif",
             }}>
               {user?.email || 'User'}
-            </p>
-            <p style={{
-              fontSize: 10, margin: '2px 0 0', color: C.textMuted,
-              textTransform: 'capitalize',
+            </div>
+            <div style={{
+              fontSize: 10, marginTop: 2, color: S.textMuted,
+              textTransform: 'capitalize', fontFamily: "'Inter', sans-serif",
             }}>
               {user?.role || 'viewer'}
-            </p>
+            </div>
           </div>
-          <button
-            onClick={handleLogout}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              padding: 4, borderRadius: 6, color: C.textMuted,
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
-              e.currentTarget.style.color = '#fff'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'none'
-              e.currentTarget.style.color = C.textMuted
-            }}
-          >
-            <LogOut style={{ width: 15, height: 15 }} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <NotificationBell onNavigate={(path) => navigate(path)} />
+            <button
+              onClick={handleLogout}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: 6, borderRadius: 6, color: S.textMuted,
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
+                e.currentTarget.style.color = '#fff'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'none'
+                e.currentTarget.style.color = S.textMuted
+              }}
+            >
+              <LogOut style={{ width: 14, height: 14 }} />
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <main style={{ flex: 1, overflowY: 'auto', background: '#F9F7F4' }}>
+      <main style={{ flex: 1, overflowY: 'auto', background: '#F8FAFC' }}>
         <Outlet />
       </main>
     </div>

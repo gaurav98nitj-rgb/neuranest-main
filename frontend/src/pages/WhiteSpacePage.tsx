@@ -3,11 +3,11 @@ import { whitespaceApi, categoriesApi } from '../lib/api'
 import { Map, TrendingUp, AlertTriangle, Lightbulb, ChevronRight, X, Package, DollarSign, Users, Flame } from 'lucide-react'
 
 const C = {
-  bg: '#F9F7F4', card: '#FFFFFF', border: '#E6E1DA', borderLight: '#F0ECE6',
-  coral: '#E8714A', coralLight: '#FCEEE8', sage: '#1A8754', sageLight: '#E8F5EE',
-  amber: '#D4930D', amberLight: '#FFF8E6', rose: '#C0392B', roseLight: '#FFF0F0',
-  plum: '#7C3AED', plumLight: '#F3EEFF', charcoal: '#2D3E50', charcoalDeep: '#1A2A3A',
-  ink: '#2A2520', slate: '#5C5549', stone: '#8B8479', sand: '#B8B2A8',
+  bg: '#F8FAFC', card: '#FFFFFF', border: '#E2E8F0', borderLight: '#F1F5F9',
+  coral: '#E16A4A', coralLight: '#FEF0EB', sage: '#2ED3A5', sageLight: '#EAFAF5',
+  amber: '#FFC857', amberLight: '#FFF8E6', rose: '#EF4444', roseLight: '#FEF2F2',
+  plum: '#6B4EFF', plumLight: '#F0EEFF', charcoal: '#2C5282', charcoalDeep: '#1E3A5F',
+  ink: '#0F172A', slate: '#475569', stone: '#64748B', sand: '#94A3B8',
 }
 
 const STAGE: Record<string, { bg: string; text: string }> = {
@@ -32,7 +32,7 @@ export default function WhiteSpacePage() {
   const [drillDown, setDrillDown] = useState<CellDrillDown | null>(null)
   const [drillLoading, setDrillLoading] = useState(false)
 
-  useEffect(() => { categoriesApi.list().then(r => setCategories(r.data || [])).catch(() => {}) }, [])
+  useEffect(() => { categoriesApi.list().then(r => setCategories(r.data || [])).catch(() => { }) }, [])
 
   const loadHeatmap = useCallback(async () => {
     setLoading(true)
@@ -72,12 +72,12 @@ export default function WhiteSpacePage() {
   const bestCell = cells.reduce((best, c) => (c.white_space_score > (best?.white_space_score || 0) ? c : best), cells[0])
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif", color: C.ink }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Inter', -apple-system, sans-serif", color: C.ink }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
           <Map style={{ width: 22, height: 22, color: C.sage }} />
-          <h1 style={{ fontSize: 28, fontWeight: 400, margin: 0, color: C.charcoalDeep, fontFamily: "'Newsreader', Georgia, serif" }}>White-Space Detection</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: C.charcoalDeep, fontFamily: "'Sora', sans-serif" }}>White-Space Detection</h1>
         </div>
         <p style={{ fontSize: 13, color: C.stone, marginLeft: 32 }}>Identify market gaps where demand exists but supply is weak, quality is poor, or prices are misaligned.</p>
       </div>

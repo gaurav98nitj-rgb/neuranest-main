@@ -89,6 +89,87 @@ class GenNextProduct(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Product Brief Models
+# ---------------------------------------------------------------------------
+class MarketSizingData(BaseModel):
+    tam: str
+    sam: str
+    som: str
+    assumptions: List[str]
+    growth_rate: str
+
+
+class MarginStackData(BaseModel):
+    cogs: str
+    amazon_fees: str
+    ppc_ads: str
+    gross_margin: str
+    net_margin: str
+    break_even_units: str
+    notes: List[str]
+
+
+class GTMPhase(BaseModel):
+    phase: str
+    duration: str
+    tactics: List[str]
+    kpis: List[str]
+
+
+class SupplyChainData(BaseModel):
+    moq: str
+    lead_time: str
+    sourcing_notes: str
+    certifications: List[str]
+    packaging_format: str
+    supplier_regions: List[str]
+
+
+class BrandIdentityData(BaseModel):
+    brand_name_suggestions: List[str]
+    tone_of_voice: str
+    key_claims: List[str]
+    packaging_format: str
+    brand_archetype: str
+    color_palette_keywords: List[str]
+
+
+class RiskItem(BaseModel):
+    risk: str
+    probability: str  # Low / Medium / High
+    impact: str       # Low / Medium / High
+    mitigation: str
+
+
+class ChecklistItem(BaseModel):
+    task: str
+    owner: str   # Founder / Agency / Platform / Supplier
+    priority: str  # P0 / P1 / P2
+    notes: Optional[str] = None
+
+
+class ProductBrief(BaseModel):
+    product_name: str
+    tagline: str
+    executive_summary: str
+    opportunity_statement: str
+    market_sizing: MarketSizingData
+    margin_stack: MarginStackData
+    gtm_plan: List[GTMPhase]
+    supply_chain: SupplyChainData
+    brand_identity: BrandIdentityData
+    risks: List[RiskItem]
+    launch_checklist: List[ChecklistItem]
+
+
+class ProductBriefRequest(BaseModel):
+    product: GenNextProduct
+    niches: List[str]
+    competitors: dict = {}
+    geo: str = "US"
+
+
+# ---------------------------------------------------------------------------
 # Claude API Helper
 # ---------------------------------------------------------------------------
 async def _call_claude(user_prompt: str, system_prompt: str) -> str:
@@ -262,6 +343,188 @@ async def generate_gen_next(req: GenNextRequest):
     raw = await _call_claude(prompt, system)
     parsed = _parse_json(raw)
     return parsed
+
+
+# ---------------------------------------------------------------------------
+# Stage 4: Gen-Next Product → Full Product Brief
+# ---------------------------------------------------------------------------
+@router.post("/brief", response_model=ProductBrief)
+async def generate_product_brief(req: ProductBriefRequest):
+    """
+    Stage 4: Take a single Gen-Next product concept and generate a comprehensive
+    8-section product brief: Executive Summary, Market Sizing, Margin Stack,
+    Go-To-Market Plan, Supply Chain, Brand Identity, Risk Register, Launch Checklist.
+    """
+    p = req.product
+    system = (
+        "You are a world-class product strategist and Amazon launch expert. "
+        "You produce detailed, investor-grade product briefs for physical product launches. "
+        "Return ONLY a valid JSON object (no markdown, no explanation). "
+        "The object must have exactly these keys: "
+        '"product_name" (string), '
+        '"tagline" (string), '
+        '"executive_summary" (string, 3 compelling sentences), '
+        '"opportunity_statement" (string, 1 punchy sentence on the market gap), '
+        '"market_sizing" (object with keys tam, sam, som (all strings like "$2.4B"), assumptions (array of 3 strings), growth_rate (string like "18% CAGR")), '
+        '"margin_stack" (object with keys cogs, amazon_fees, ppc_ads, gross_margin, net_margin, break_even_units (all strings), notes (array of 2 strings)), '
+        '"gtm_plan" (array of 3 phase objects, each with keys phase (string), duration (string), tactics (array of 4 strings), kpis (array of 3 strings)), '
+        '"supply_chain" (object with keys moq (string), lead_time (string), sourcing_notes (string), certifications (array of strings), packaging_format (string), supplier_regions (array of strings)), '
+        '"brand_identity" (object with keys brand_name_suggestions (array of 3 strings), tone_of_voice (string), key_claims (array of 4 strings), packaging_format (string), brand_archetype (string), color_palette_keywords (array of 3 strings)), '
+        '"risks" (array of 5 objects, each with keys risk (string), probability (one of "Low","Medium","High"), impact (one of "Low","Medium","High"), mitigation (string)), '
+        '"launch_checklist" (array of 20 objects, each with keys task (string), owner (one of "Founder","Agency","Platform","Supplier"), priority (one of "P0","P1","P2"), notes (string or null)). '
+        "Be specific, realistic, and actionable. Make all numbers credible for the given market."
+    )
+
+    competitor_summary = ""
+    if req.competitors:
+        for niche, comps in req.competitors.items():
+            if comps:
+                weaknesses = [c.get("weakness", "") for c in comps if isinstance(c, dict)]
+                competitor_summary += f"\n- {niche}: key gaps are: {'; '.join(weaknesses[:3])}"
+
+    prompt = (
+        f"Product concept:\n"
+        f"  Name: {p.productName}\n"
+        f"  Tagline: {p.tagline}\n"
+        f"  Category: {p.category}\n"
+        f"  Target price: {p.targetPrice}\n"
+        f"  Estimated monthly sales: {p.estimatedMonthlySales}\n"
+        f"  White space: {p.whiteSpace}\n"
+        f"  Key features: {', '.join(p.keyFeatures)}\n"
+        f"  Differentiator: {p.differentiator}\n"
+        f"  Target audience: {p.targetAudience}\n"
+        f"  Ingredients/specs: {', '.join(p.ingredients_or_specs)}\n"
+        f"  Launch difficulty: {p.launchDifficulty}\n"
+        f"  Confidence score: {p.confidenceScore}/100\n\n"
+        f"Market niches: {', '.join(req.niches)}\n"
+        f"Geography: {req.geo}\n"
+        f"Competitor weakness summary:{competitor_summary or ' No competitor data provided.'}\n\n"
+        "Generate a comprehensive product brief for this concept. Be specific with numbers. "
+        "The margin stack should be realistic for an Amazon FBA product at this price point. "
+        "The GTM plan should have 3 phases: Pre-Launch (60 days), Launch Week, and 90-Day Growth. "
+        "The launch checklist should cover: supplier vetting, product photography, listing copy, "
+        "PPC setup, influencer seeding, review strategy, and inventory planning."
+    )
+
+    raw = await _call_claude(prompt, system)
+    parsed = _parse_json(raw)
+    return parsed
+
+
+# ---------------------------------------------------------------------------
+# Stage 4b: Export Product Brief as Markdown
+# ---------------------------------------------------------------------------
+@router.post("/brief/export")
+async def export_product_brief(req: ProductBriefRequest):
+    """
+    Generate a Product Brief and return it as a formatted Markdown string
+    suitable for download as a .md file.
+    """
+    # Reuse the brief endpoint logic
+    brief_data = await generate_product_brief(req)
+    brief = brief_data if isinstance(brief_data, dict) else brief_data.dict()
+
+    lines = []
+    lines.append(f"# Product Brief: {brief.get('product_name', 'Unknown')}")
+    lines.append(f"_{brief.get('tagline', '')}_ | Market: {req.geo}")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    # Executive Summary
+    lines.append("## 🎯 Executive Summary")
+    lines.append(brief.get('executive_summary', ''))
+    lines.append("")
+    lines.append(f"**Opportunity:** {brief.get('opportunity_statement', '')}")
+    lines.append("")
+
+    # Market Sizing
+    ms = brief.get('market_sizing', {})
+    lines.append("## 📊 Market Sizing")
+    lines.append(f"| Metric | Value |")
+    lines.append(f"|--------|-------|")
+    lines.append(f"| TAM (Total Addressable Market) | {ms.get('tam', 'N/A')} |")
+    lines.append(f"| SAM (Serviceable Addressable Market) | {ms.get('sam', 'N/A')} |")
+    lines.append(f"| SOM (Serviceable Obtainable Market) | {ms.get('som', 'N/A')} |")
+    lines.append(f"| Growth Rate | {ms.get('growth_rate', 'N/A')} |")
+    lines.append("")
+    lines.append("**Key Assumptions:**")
+    for a in ms.get('assumptions', []):
+        lines.append(f"- {a}")
+    lines.append("")
+
+    # Margin Stack
+    mg = brief.get('margin_stack', {})
+    lines.append("## 💰 Margin Stack")
+    lines.append(f"| Item | Value |")
+    lines.append(f"|------|-------|")
+    lines.append(f"| COGS | {mg.get('cogs', 'N/A')} |")
+    lines.append(f"| Amazon Fees | {mg.get('amazon_fees', 'N/A')} |")
+    lines.append(f"| PPC / Ads | {mg.get('ppc_ads', 'N/A')} |")
+    lines.append(f"| Gross Margin | {mg.get('gross_margin', 'N/A')} |")
+    lines.append(f"| Net Margin | {mg.get('net_margin', 'N/A')} |")
+    lines.append(f"| Break-Even Units | {mg.get('break_even_units', 'N/A')} |")
+    lines.append("")
+    for n in mg.get('notes', []):
+        lines.append(f"> {n}")
+    lines.append("")
+
+    # GTM Plan
+    lines.append("## 🚀 Go-To-Market Plan")
+    for phase in brief.get('gtm_plan', []):
+        lines.append(f"### {phase.get('phase', 'Phase')} ({phase.get('duration', '')})") 
+        lines.append("**Tactics:**")
+        for t in phase.get('tactics', []):
+            lines.append(f"- {t}")
+        lines.append("**KPIs:**")
+        for k in phase.get('kpis', []):
+            lines.append(f"- {k}")
+        lines.append("")
+
+    # Supply Chain
+    sc = brief.get('supply_chain', {})
+    lines.append("## 🏭 Supply Chain")
+    lines.append(f"- **MOQ:** {sc.get('moq', 'N/A')}")
+    lines.append(f"- **Lead Time:** {sc.get('lead_time', 'N/A')}")
+    lines.append(f"- **Packaging:** {sc.get('packaging_format', 'N/A')}")
+    lines.append(f"- **Supplier Regions:** {', '.join(sc.get('supplier_regions', []))}")
+    lines.append(f"- **Certifications Needed:** {', '.join(sc.get('certifications', []))}")
+    lines.append(f"\n{sc.get('sourcing_notes', '')}")
+    lines.append("")
+
+    # Brand Identity
+    bi = brief.get('brand_identity', {})
+    lines.append("## 🎨 Brand Identity")
+    lines.append(f"- **Brand Archetype:** {bi.get('brand_archetype', 'N/A')}")
+    lines.append(f"- **Tone of Voice:** {bi.get('tone_of_voice', 'N/A')}")
+    lines.append(f"- **Name Suggestions:** {', '.join(bi.get('brand_name_suggestions', []))}")
+    lines.append(f"- **Packaging:** {bi.get('packaging_format', 'N/A')}")
+    lines.append(f"- **Colour Keywords:** {', '.join(bi.get('color_palette_keywords', []))}")
+    lines.append("\n**Key Claims:**")
+    for c in bi.get('key_claims', []):
+        lines.append(f"- {c}")
+    lines.append("")
+
+    # Risks
+    lines.append("## ⚠️ Risk Register")
+    lines.append("| Risk | Probability | Impact | Mitigation |")
+    lines.append("|------|-------------|--------|------------|")
+    for r in brief.get('risks', []):
+        lines.append(f"| {r.get('risk','')} | {r.get('probability','')} | {r.get('impact','')} | {r.get('mitigation','')} |")
+    lines.append("")
+
+    # Launch Checklist
+    lines.append("## ✅ Launch Checklist")
+    lines.append("| # | Task | Owner | Priority | Notes |")
+    lines.append("|---|------|-------|----------|-------|")
+    for i, item in enumerate(brief.get('launch_checklist', []), 1):
+        notes = item.get('notes') or ''
+        lines.append(f"| {i} | {item.get('task','')} | {item.get('owner','')} | {item.get('priority','')} | {notes} |")
+    lines.append("")
+    lines.append("---")
+    lines.append(f"_Generated by NeuraNest Intelligence — {req.geo} Market_")
+
+    return {"markdown": "\n".join(lines), "filename": f"product-brief-{req.product.productName.lower().replace(' ', '-')}.md"}
 
 
 # ---------------------------------------------------------------------------

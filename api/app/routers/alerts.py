@@ -1,22 +1,45 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, desc, and_
+from sqlalchemy import select, desc, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.models import User, Alert, AlertEvent
+from app.models import User, Alert, AlertEvent, Org
 from app.schemas import AlertCreateRequest, AlertResponse, AlertEventResponse
-from app.dependencies import require_pro
+from app.dependencies import get_current_user, require_pro
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
+
+FREE_ALERT_LIMIT = 3
+
+
+async def _check_alert_quota(user: User, db: AsyncSession):
+    """Raise 403 if a free-user already has FREE_ALERT_LIMIT alerts."""
+    if user.role == "admin":
+        return  # admins are unrestricted
+    if user.org_id:
+        org_result = await db.execute(select(Org).where(Org.id == user.org_id))
+        org = org_result.scalar_one_or_none()
+        if org and org.plan in ("pro", "enterprise"):
+            return  # pro/enterprise unlimited
+    count_result = await db.execute(
+        select(func.count()).select_from(Alert).where(Alert.user_id == user.id)
+    )
+    count = count_result.scalar_one()
+    if count >= FREE_ALERT_LIMIT:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Free plan allows up to {FREE_ALERT_LIMIT} alerts. Upgrade to Pro for unlimited alerts.",
+        )
 
 
 @router.post("", response_model=AlertResponse, status_code=status.HTTP_201_CREATED)
 async def create_alert(
     req: AlertCreateRequest,
-    user: User = Depends(require_pro()),
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await _check_alert_quota(user, db)
     alert = Alert(
         user_id=user.id,
         topic_id=req.topic_id,
@@ -31,7 +54,7 @@ async def create_alert(
 
 @router.get("", response_model=list[AlertResponse])
 async def list_alerts(
-    user: User = Depends(require_pro()),
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

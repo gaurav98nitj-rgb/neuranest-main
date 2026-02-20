@@ -3,24 +3,25 @@ import { useNavigate } from 'react-router-dom'
 import { useWatchlist, useRemoveFromWatchlist } from '../hooks/useData'
 import {
   Trash2, Bell, BellPlus, Eye, Bookmark, TrendingUp,
-  ArrowRight, ArrowUpRight, ArrowDownRight, Minus, AlertCircle, RefreshCw,
+  ArrowRight, ArrowUpRight, ArrowDownRight, Minus,
 } from 'lucide-react'
 import clsx from 'clsx'
+import { EmptyState, ErrorState } from '../components/UIKit'
 
 const STAGE_BADGE: Record<string, string> = {
-  emerging:  'bg-sage-50 text-sage-400',
+  emerging: 'bg-sage-50 text-sage-400',
   exploding: 'bg-coral-100 text-coral-500',
-  peaking:   'bg-amber-50 text-amber-300',
+  peaking: 'bg-amber-50 text-amber-300',
   declining: 'bg-rose-50 text-rose-400',
-  stable:    'bg-plum-50 text-plum-400',
-  unknown:   'bg-sand-200 text-sand-600',
+  stable: 'bg-plum-50 text-plum-400',
+  unknown: 'bg-sand-200 text-sand-600',
 }
 const STAGE_BAR: Record<string, string> = {
-  emerging:  'bg-sage-400',
+  emerging: 'bg-sage-400',
   exploding: 'bg-coral-400',
-  peaking:   'bg-amber-300',
+  peaking: 'bg-amber-300',
   declining: 'bg-rose-400',
-  stable:    'bg-plum-400',
+  stable: 'bg-plum-400',
 }
 
 function ScoreRing({ score, label, size = 52 }: { score: number | null | undefined; label: string; size?: number }) {
@@ -94,9 +95,9 @@ export default function WatchlistPage() {
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null)
   const count = items?.length || 0
 
-  const getName   = (item: any) => item.topic_name ?? item.name ?? item.topic?.name ?? 'Unnamed Topic'
-  const getStage  = (item: any) => item.topic_stage ?? item.stage ?? item.topic?.lifecycle_status ?? 'unknown'
-  const getScore  = (item: any) => item.opportunity_score ?? item.score ?? item.topic?.latest_scores?.opportunity ?? null
+  const getName = (item: any) => item.topic_name ?? item.name ?? item.topic?.name ?? 'Unnamed Topic'
+  const getStage = (item: any) => item.topic_stage ?? item.stage ?? item.topic?.lifecycle_status ?? 'unknown'
+  const getScore = (item: any) => item.opportunity_score ?? item.score ?? item.topic?.latest_scores?.opportunity ?? null
   const getGrowth = (item: any) => item.growth_4w ?? item.topic?.growth_4w ?? null
   const getTopicId = (item: any) => item.topic_id ?? item.id
 
@@ -108,7 +109,7 @@ export default function WatchlistPage() {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl text-charcoal-700" style={{ fontFamily: "'Newsreader', Georgia, serif", fontWeight: 400 }}>My Watchlist</h1>
+          <h1 className="text-2xl text-charcoal-700" style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800 }}>My Watchlist</h1>
           <p className="text-sm text-sand-600 mt-1">
             {count} topic{count !== 1 ? 's' : ''} tracked · Free plan: 5 slots
           </p>
@@ -120,32 +121,19 @@ export default function WatchlistPage() {
       </div>
 
       {isError && (
-        <div className="card p-6 flex items-center gap-4 border border-rose-200 mb-4">
-          <AlertCircle className="h-8 w-8 text-rose-400 shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-charcoal-700">Failed to load watchlist</p>
-            <p className="text-xs text-sand-600 mt-0.5">Check your connection and try again.</p>
-          </div>
-          <button onClick={() => refetch()}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-sand-700 border border-sand-300 rounded-lg hover:bg-sand-100 transition-colors">
-            <RefreshCw className="h-3 w-3" /> Retry
-          </button>
-        </div>
+        <ErrorState message="Failed to load watchlist. Check your connection." onRetry={() => refetch()} />
       )}
 
       {isLoading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <SkeletonCard key={i} />)}</div>
       ) : !items?.length && !isError ? (
-        <div className="card p-12 text-center">
-          <Bookmark className="h-16 w-16 text-sand-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-charcoal-700 mb-2">Your watchlist is empty</h3>
-          <p className="text-sm text-sand-600 mb-6 max-w-md mx-auto">
-            Add topics from the Explorer to track trend stage changes, score spikes, and new competition.
-          </p>
-          <button onClick={() => navigate('/explore')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-coral-400 text-white rounded-lg hover:bg-coral-500 text-sm font-medium transition-colors">
-            <TrendingUp className="h-4 w-4" /> Explore Topics
-          </button>
+        <div className="card">
+          <EmptyState
+            emoji="🔖"
+            title="Your watchlist is empty"
+            description="Add topics from the Explorer to track trend stage changes, score spikes, and new competition."
+            cta={{ label: '🔍 Explore Topics', onClick: () => navigate('/explore') }}
+          />
         </div>
       ) : (
         <div className="space-y-3">

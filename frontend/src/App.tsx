@@ -17,6 +17,8 @@ import ProductIntelligencePage from './pages/ProductIntelligencePage'
 import WhiteSpacePage from './pages/WhiteSpacePage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
+import ProductBriefPage from './pages/ProductBriefPage'
+import OnboardingPage from './pages/OnboardingPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuth = useAuthStore((s) => s.isAuthenticated)
@@ -31,6 +33,13 @@ export default function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/auth/login" element={<LoginPage />} />
       <Route path="/auth/signup" element={<SignupPage />} />
+
+      {/* Onboarding — protected but no sidebar */}
+      <Route path="/onboarding" element={
+        <ProtectedRoute>
+          <OnboardingPage />
+        </ProtectedRoute>
+      } />
 
       {/* Protected routes (with sidebar layout) */}
       <Route
@@ -54,6 +63,7 @@ export default function App() {
         <Route path="/science" element={<ScienceRadarPage />} />
         <Route path="/amazon-ba" element={<AmazonBAPage />} />
         <Route path="/product-intelligence" element={<ProductIntelligencePage />} />
+        <Route path="/product-brief" element={<ProductBriefPage />} />
       </Route>
 
       {/* Fallback */}

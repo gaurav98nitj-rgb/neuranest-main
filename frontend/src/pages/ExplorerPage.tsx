@@ -14,36 +14,36 @@ import clsx from 'clsx'
 const STAGES = ['All', 'emerging', 'exploding', 'peaking', 'declining']
 const CATEGORIES = ['All', 'Electronics', 'Health', 'Home', 'Beauty', 'Fitness', 'Kitchen', 'Outdoors', 'Pets', 'Baby']
 
-/* ─── Color tokens (warm palette) ─── */
+/* ─── NeuraNest brand palette ─── */
 const C = {
-  bg: '#F9F7F4', card: '#FFFFFF', border: '#E6E1DA', borderLight: '#F0ECE6',
-  coral: '#E8714A', coralHover: '#D4623D', coralLight: '#FCEEE8', coralUltraLight: '#FFF6F3',
-  sage: '#1A8754', sageLight: '#E8F5EE', amber: '#D4930D', amberLight: '#FFF8E6',
-  rose: '#C0392B', roseLight: '#FFF0F0', plum: '#7C3AED', plumLight: '#F3EEFF',
-  charcoal: '#2D3E50', charcoalDeep: '#1A2A3A',
-  ink: '#2A2520', slate: '#5C5549', stone: '#8B8479', sand: '#B8B2A8',
+  bg: '#F8FAFC', card: '#FFFFFF', border: '#E2E8F0', borderLight: '#F1F5F9',
+  coral: '#E16A4A', coralHover: '#C85A3A', coralLight: '#FEF0EB', coralUltraLight: '#FFF7F5',
+  sage: '#2ED3A5', sageLight: '#EAFAF5', amber: '#FFC857', amberLight: '#FFF8E6',
+  rose: '#EF4444', roseLight: '#FEF2F2', plum: '#6B4EFF', plumLight: '#F0EEFF',
+  charcoal: '#2C5282', charcoalDeep: '#1E3A5F',
+  ink: '#0F172A', slate: '#475569', stone: '#64748B', sand: '#94A3B8',
 }
 
 const STAGE_CONFIG: Record<string, { bg: string; text: string; dot: string; label: string }> = {
-  emerging:  { bg: C.sageLight, text: C.sage, dot: C.sage, label: 'Emerging' },
+  emerging: { bg: C.sageLight, text: C.sage, dot: C.sage, label: 'Emerging' },
   exploding: { bg: C.coralLight, text: C.coral, dot: C.coral, label: 'Exploding' },
-  peaking:   { bg: C.amberLight, text: C.amber, dot: C.amber, label: 'Peaking' },
+  peaking: { bg: C.amberLight, text: C.amber, dot: C.amber, label: 'Peaking' },
   declining: { bg: C.roseLight, text: C.rose, dot: C.rose, label: 'Declining' },
-  unknown:   { bg: C.borderLight, text: C.stone, dot: C.stone, label: 'Unknown' },
+  unknown: { bg: C.borderLight, text: C.stone, dot: C.stone, label: 'Unknown' },
 }
 
 const CONFIDENCE_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
-  high:   { bg: C.sageLight, text: C.sage, label: 'High Confidence' },
+  high: { bg: C.sageLight, text: C.sage, label: 'High Confidence' },
   medium: { bg: C.amberLight, text: C.amber, label: 'Medium Confidence' },
-  low:    { bg: C.borderLight, text: C.stone, label: 'Low Confidence' },
+  low: { bg: C.borderLight, text: C.stone, label: 'Low Confidence' },
 }
 
 const ARCHETYPE_CONFIG: Record<string, { icon: any; label: string; color: string }> = {
   'science-led': { icon: Beaker, label: 'Science-Led', color: C.plum },
-  'social-led':  { icon: Radio, label: 'Social-Led', color: C.coral },
+  'social-led': { icon: Radio, label: 'Social-Led', color: C.coral },
   'problem-led': { icon: Target, label: 'Problem-Led', color: C.sage },
-  'demand-led':  { icon: TrendingUp, label: 'Demand-Led', color: C.amber },
-  'unknown':     { icon: Activity, label: 'Multi-Signal', color: C.stone },
+  'demand-led': { icon: TrendingUp, label: 'Demand-Led', color: C.amber },
+  'unknown': { icon: Activity, label: 'Multi-Signal', color: C.stone },
 }
 
 const DRIVER_LABELS: Record<string, string> = {
@@ -391,8 +391,8 @@ function DecisionCard({ topic, watchlistIds, onAdd, onRemove, onNavigate }: {
                 }}>
                   {convergence.active >= 4 ? 'Strong convergence — multiple signals aligned'
                     : convergence.active >= 3 ? 'Good convergence — trend validated across sources'
-                    : convergence.active >= 2 ? 'Partial convergence — needs more signal confirmation'
-                    : 'Weak convergence — early stage signal'}
+                      : convergence.active >= 2 ? 'Partial convergence — needs more signal confirmation'
+                        : 'Weak convergence — early stage signal'}
                 </div>
               </div>
             </div>
@@ -546,15 +546,15 @@ export default function ExplorerPage() {
   return (
     <div style={{
       minHeight: '100vh', background: C.bg, color: C.ink,
-      fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
+      fontFamily: "'Inter', -apple-system, sans-serif",
       padding: '28px 36px',
     }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h1 style={{
-            fontSize: 28, fontWeight: 400, margin: 0, letterSpacing: '-0.02em',
-            color: C.charcoalDeep, fontFamily: "'Newsreader', Georgia, serif",
+            fontSize: 28, fontWeight: 700, margin: 0, letterSpacing: '-0.02em',
+            color: C.charcoalDeep, fontFamily: "'Sora', sans-serif",
           }}>
             Trend Explorer
           </h1>

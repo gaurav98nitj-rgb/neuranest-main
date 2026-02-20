@@ -4,118 +4,141 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['Newsreader', 'Georgia', 'Times New Roman', 'serif'],
-        body: ['Plus Jakarta Sans', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        // NeuraNest brand typography
+        display: ['Sora', '-apple-system', 'sans-serif'],
+        body: ['Inter', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'SF Mono', 'Consolas', 'monospace'],
+        // Legacy aliases
+        heading: ['Sora', 'sans-serif'],
+        sans: ['Inter', '-apple-system', 'sans-serif'],
       },
       colors: {
-        // ============ PRIMARY WARM PALETTE ============
-        coral: {
-          50:  '#FFF6F3',
-          100: '#FCEEE8',
-          200: '#F8D4C6',
-          300: '#F0AD94',
-          400: '#E8714A',
-          500: '#D4623D',
-          600: '#B8502F',
-          700: '#8C3D24',
-          800: '#6B2E1A',
-          900: '#4A1F12',
-        },
-        charcoal: {
-          50:  '#F4F6F8',
-          100: '#E2E7EC',
-          200: '#C5CED8',
-          300: '#8B9DB0',
-          400: '#5F7590',
-          500: '#425B73',
-          600: '#2D3E50',
-          700: '#1A2A3A',
-          800: '#111D29',
-          900: '#0A1219',
-        },
-        sand: {
-          50:  '#FDFCFB',
-          100: '#F9F7F4',
-          200: '#F0ECE6',
-          300: '#E6E1DA',
-          400: '#D4CEC5',
-          500: '#B8B2A8',
-          600: '#8B8479',
-          700: '#5C5549',
-          800: '#3D3832',
-          900: '#2A2520',
-        },
-        sage: {
-          50:  '#E8F5EE',
-          100: '#D1EBDD',
-          200: '#A3D7BB',
-          300: '#4CAF7B',
-          400: '#1A8754',
-          500: '#136B42',
-          600: '#0D4F31',
-        },
-        amber: {
-          50:  '#FFF8E6',
-          100: '#FFEDB3',
-          200: '#FFD966',
-          300: '#D4930D',
-          400: '#B07A0A',
-          500: '#8C6108',
-        },
-        rose: {
-          50:  '#FFF0F0',
-          100: '#FDDCDC',
-          200: '#F5A3A3',
-          300: '#E06060',
-          400: '#C0392B',
-          500: '#962D22',
-        },
-        plum: {
-          50:  '#F3EEFF',
-          100: '#E4D8FF',
-          200: '#C9AAFF',
-          300: '#A678F5',
-          400: '#7C3AED',
-          500: '#6025C7',
+        // ============ NEURANEST BRAND PALETTE ============
+        nn: {
+          orange: '#E16A4A',
+          'orange-light': '#FEF0EB',
+          blue: '#1E3A5F',
+          'blue-mid': '#2C5282',
+          'blue-light': '#EBF4FF',
+          purple: '#6B4EFF',
+          'purple-light': '#F0EEFF',
+          mint: '#2ED3A5',
+          'mint-light': '#EAFAF5',
+          gold: '#FFC857',
+          'gold-light': '#FFF8E6',
+          bg: '#F8FAFC',
+          dark: '#0F172A',
+          ink: '#1E293B',
+          body: '#475569',
+          muted: '#94A3B8',
+          border: '#E2E8F0',
+          'border-light': '#F1F5F9',
         },
 
         // ============ LEGACY COLOR ALIASES ============
-        // These map the OLD dark-theme class names to warm colors
-        // so all existing pages work without any TSX edits.
-        //
-        // OLD THEME:  bg-brand-900 = dark navy page background
-        // NEW THEME:  bg-brand-900 = warm cream (#F9F7F4)
-
-        brand: {
-          100: '#1A2A3A',   // text-brand-100 → charcoal-700 (primary heading)
-          200: '#2D3E50',   // text-brand-200 → charcoal-600 (secondary text)
-          300: '#5C5549',   // text-brand-300 → sand-700
-          400: '#8B8479',   // text-brand-400 → sand-600 (muted text)
-          500: '#E8714A',   // bg-brand-500  → coral-400 (accent/buttons)
-          600: '#D4623D',   // bg-brand-600  → coral-500 (accent darker)
-          700: '#E6E1DA',   // border-brand-700 → sand-300
-          800: '#F0ECE6',   // bg-brand-800  → sand-200 (secondary bg)
-          900: '#F9F7F4',   // bg-brand-900  → sand-100 (page bg cream)
+        // These keep all old Tailwind class names working
+        coral: {
+          50: '#FFF7F5',
+          100: '#FEF0EB',
+          200: '#FBC4B0',
+          300: '#F49B7E',
+          400: '#E16A4A',
+          500: '#C85A3A',
+          600: '#A84830',
+          700: '#8C3A26',
+          800: '#6B2D1E',
+          900: '#4A1F14',
+        },
+        charcoal: {
+          50: '#F8FAFC',
+          100: '#F1F5F9',
+          200: '#E2E8F0',
+          300: '#94A3B8',
+          400: '#64748B',
+          500: '#475569',
+          600: '#2C5282',
+          700: '#1E3A5F',
+          800: '#162D4A',
+          900: '#0F172A',
+        },
+        sand: {
+          50: '#FDFCFB',
+          100: '#F8FAFC',
+          200: '#F1F5F9',
+          300: '#E2E8F0',
+          400: '#CBD5E1',
+          500: '#94A3B8',
+          600: '#64748B',
+          700: '#475569',
+          800: '#1E293B',
+          900: '#0F172A',
+        },
+        sage: {
+          50: '#EAFAF5',
+          100: '#D0F4E8',
+          200: '#B5EFE0',
+          300: '#6EE4C7',
+          400: '#2ED3A5',
+          500: '#24B890',
+          600: '#1A9E7C',
+          700: '#148068',
+        },
+        plum: {
+          50: '#F7F5FF',
+          100: '#F0EEFF',
+          200: '#DDD8FF',
+          300: '#B8AAFF',
+          400: '#6B4EFF',
+          500: '#5A3DE8',
+          600: '#4A30C7',
+        },
+        amber: {
+          50: '#FFFCF0',
+          100: '#FFF8E6',
+          200: '#FDEAB5',
+          300: '#FFC857',
+          400: '#E6B34A',
+          500: '#CC9A3D',
+        },
+        rose: {
+          50: '#FFF5F5',
+          100: '#FEF2F2',
+          200: '#FCA5A5',
+          300: '#F87171',
+          400: '#EF4444',
+          500: '#DC2626',
         },
 
-        // Surface / card backgrounds
+        // Surface / card
         srf: {
-          DEFAULT: '#FFFFFF',   // bg-srf → white cards
-          1: '#FFFFFF',         // bg-srf-1 → white
-          2: '#F0ECE6',         // bg-srf-2 → sand-200 hover
+          DEFAULT: '#FFFFFF',
+          1: '#FFFFFF',
+          2: '#F1F5F9',
         },
         surface: {
           1: '#FFFFFF',
-          2: '#F0ECE6',
+          2: '#F1F5F9',
         },
 
-        // Border colors
+        // Border
         ln: {
-          DEFAULT: '#E6E1DA',   // border-ln → sand-300
-          lt: '#D4CEC5',        // border-ln-lt → sand-400
+          DEFAULT: '#E2E8F0',
+          lt: '#F1F5F9',
         },
-        line: '#E6E1DA',        // border-line → sand-300
+        line: '#E2E8F0',
+
+        // Legacy brand→NN remapping
+        brand: {
+          100: '#1E3A5F',
+          200: '#2C5282',
+          300: '#475569',
+          400: '#64748B',
+          500: '#E16A4A',
+          600: '#C85A3A',
+          700: '#E2E8F0',
+          800: '#F1F5F9',
+          900: '#F8FAFC',
+        },
       },
     },
   },

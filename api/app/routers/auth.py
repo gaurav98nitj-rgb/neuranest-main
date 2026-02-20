@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,7 +17,7 @@ settings = get_settings()
 
 
 @router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def signup(req: SignupRequest, db: AsyncSession = Depends(get_db)):
+async def signup(req: SignupRequest, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
     # Check if email exists
     existing = await db.execute(select(User).where(User.email == req.email))
     if existing.scalar_one_or_none():
@@ -41,6 +41,10 @@ async def signup(req: SignupRequest, db: AsyncSession = Depends(get_db)):
 
     access_token = create_access_token(str(user.id), user.role)
     refresh_token = create_refresh_token(str(user.id))
+
+    # Fire welcome email in background (non-blocking)
+    from app.services.email import send_welcome_email
+    background_tasks.add_task(send_welcome_email, user.email, user.email.split('@')[0])
 
     return TokenResponse(
         access_token=access_token,

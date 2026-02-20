@@ -1,280 +1,346 @@
 import { useState } from 'react'
 import { useAuthStore } from '../lib/store'
 import {
-  User, Shield, Bell, CreditCard, LogOut, Check, Crown, Mail,
+  User, Bell, Shield, CreditCard, Palette, Database,
+  ChevronRight, Check, LogOut, Save, Eye, EyeOff,
 } from 'lucide-react'
-import clsx from 'clsx'
 
-const PLAN_FEATURES = {
-  free: [
-    { label: 'Browse & search trends', included: true },
-    { label: '50 detail views/day', included: true },
-    { label: 'Opportunity score (value only)', included: true },
-    { label: 'Watchlist (5 topics)', included: false },
-    { label: 'Alerts', included: false },
-    { label: 'Score explanations', included: false },
-    { label: 'CSV export', included: false },
-    { label: 'Amazon upload', included: false },
-  ],
-  pro: [
-    { label: 'Unlimited trend views', included: true },
-    { label: 'Full opportunity score + explanation', included: true },
-    { label: 'Watchlist (50 topics)', included: true },
-    { label: 'Alerts (20 active)', included: true },
-    { label: 'CSV export', included: true },
-    { label: 'Amazon data upload', included: true },
-    { label: 'Forecast CI bands', included: true },
-    { label: 'Gen-Next product specs', included: true },
-  ],
+/* ─── NeuraNest Brand Palette ─── */
+const C = {
+  bg: '#F8FAFC', card: '#FFFFFF', border: '#E2E8F0', borderLight: '#F1F5F9',
+  coral: '#E16A4A', coralLight: '#FEF0EB',
+  sage: '#2ED3A5', sageLight: '#EAFAF5',
+  plum: '#6B4EFF', plumLight: '#F0EEFF',
+  ink: '#0F172A', slate: '#475569', stone: '#64748B', sand: '#94A3B8',
+  charcoalDeep: '#1E3A5F',
 }
 
-export default function SettingsPage() {
-  const { user, logout } = useAuthStore()
-  const [activeTab, setActiveTab] = useState<'profile' | 'plan' | 'notifications'>('profile')
-  const [displayName, setDisplayName] = useState(user?.display_name || user?.email?.split('@')[0] || '')
-  const [saved, setSaved] = useState(false)
+const TABS = [
+  { id: 'profile', icon: <User size={15} />, label: 'Profile' },
+  { id: 'notifications', icon: <Bell size={15} />, label: 'Notifications' },
+  { id: 'security', icon: <Shield size={15} />, label: 'Security' },
+  { id: 'billing', icon: <CreditCard size={15} />, label: 'Billing' },
+  { id: 'appearance', icon: <Palette size={15} />, label: 'Appearance' },
+  { id: 'data', icon: <Database size={15} />, label: 'Data & Privacy' },
+]
 
-  const role = user?.role || 'viewer'
-  const plan = role === 'admin' ? 'admin' : 'free' // Derive from role for now
-  const email = user?.email || 'Unknown'
-
-  const tabs = [
-    { id: 'profile' as const, label: 'Profile', icon: User },
-    { id: 'plan' as const, label: 'Plan & Billing', icon: CreditCard },
-    { id: 'notifications' as const, label: 'Notifications', icon: Bell },
-  ]
-
-  const handleSaveProfile = () => {
-    // TODO: API call to update profile
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
-
+function SettingSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold text-white mb-6">Settings</h1>
-
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-ln pb-px">
-        {tabs.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={clsx(
-              'flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors -mb-px',
-              activeTab === tab.id
-                ? 'text-brand-200 border-b-2 border-brand-500 bg-srf-1'
-                : 'text-brand-500 hover:text-brand-300'
-            )}>
-            <tab.icon className="h-4 w-4" />
-            {tab.label}
-          </button>
-        ))}
+    <div style={{ marginBottom: 24, background: C.card, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+      <div style={{ padding: '14px 24px', borderBottom: `1px solid ${C.borderLight}`, background: C.bg }}>
+        <h3 style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.stone, letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: "'Sora', sans-serif" }}>
+          {title}
+        </h3>
       </div>
+      <div style={{ padding: '20px 24px' }}>{children}</div>
+    </div>
+  )
+}
 
-      {/* Profile Tab */}
-      {activeTab === 'profile' && (
-        <div className="card p-6 space-y-6">
-          <div>
-            <h2 className="text-lg font-semibold text-white mb-4">Profile Information</h2>
+function SettingRow({ label, sub, children }: { label: string; sub?: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingBottom: 16, marginBottom: 16, borderBottom: `1px solid ${C.borderLight}` }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: C.ink, fontFamily: "'Inter', sans-serif" }}>{label}</div>
+        {sub && <div style={{ fontSize: 12, color: C.stone, marginTop: 2, lineHeight: 1.5 }}>{sub}</div>}
+      </div>
+      <div>{children}</div>
+    </div>
+  )
+}
 
-            {/* Avatar placeholder */}
-            <div className="flex items-center gap-4 mb-6">
-              <div className="h-16 w-16 rounded-full bg-brand-700 flex items-center justify-center text-brand-300 text-2xl font-bold">
-                {email.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-brand-200">{email}</p>
-                <p className="text-xs text-brand-500 capitalize flex items-center gap-1 mt-0.5">
-                  <Shield className="h-3 w-3" /> {role}
-                </p>
-              </div>
-            </div>
+function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!value)}
+      style={{
+        width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+        background: value ? C.coral : C.border,
+        position: 'relative', transition: 'background 0.2s',
+        padding: 0,
+      }}
+    >
+      <div style={{
+        position: 'absolute', top: 3, left: value ? 23 : 3,
+        width: 18, height: 18, borderRadius: '50%', background: '#fff',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.2)', transition: 'left 0.2s',
+      }} />
+    </button>
+  )
+}
 
-            {/* Display name */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-brand-300 mb-1">Display Name</label>
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm max-w-sm"
-                  placeholder="Your display name"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-300 mb-1">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  disabled
-                  className="w-full px-3 py-2 text-sm max-w-sm opacity-50 cursor-not-allowed"
-                />
-                <p className="text-[10px] text-brand-600 mt-1">Email cannot be changed</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 mt-6">
-              <button onClick={handleSaveProfile}
-                className="px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-400 transition-colors">
-                Save Changes
-              </button>
-              {saved && (
-                <span className="text-sm text-emerald-400 flex items-center gap-1">
-                  <Check className="h-4 w-4" /> Saved
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Danger zone */}
-          <div className="pt-6 border-t border-ln">
-            <h3 className="text-sm font-semibold text-red-400 mb-3">Danger Zone</h3>
-            <button onClick={logout}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-400 border border-red-900/50 rounded-lg hover:bg-red-900/20 transition-colors">
-              <LogOut className="h-4 w-4" /> Sign Out
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Plan Tab */}
-      {activeTab === 'plan' && (
-        <div className="space-y-4">
-          {/* Current plan */}
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-semibold text-white">Current Plan</h2>
-                <p className="text-sm text-brand-400 mt-0.5">
-                  {plan === 'admin' ? 'Admin access — all features enabled' : 'Free tier'}
-                </p>
-              </div>
-              <div className={clsx(
-                'px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5',
-                plan === 'admin'
-                  ? 'bg-purple-900/50 text-purple-300'
-                  : 'bg-brand-800 text-brand-400'
-              )}>
-                {plan === 'admin' && <Crown className="h-4 w-4" />}
-                {plan === 'admin' ? 'Admin' : 'Free'}
-              </div>
-            </div>
-
-            {plan !== 'admin' && (
-              <div className="p-4 bg-srf rounded-lg border border-ln">
-                <p className="text-sm text-brand-200 font-medium mb-1">Upgrade to Pro — $49/month</p>
-                <p className="text-xs text-brand-500">Unlock watchlists, alerts, CSV export, score explanations, and more.</p>
-                <button className="mt-3 px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-400 transition-colors">
-                  Upgrade to Pro
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Feature comparison */}
-          <div className="card p-6">
-            <h3 className="text-sm font-semibold text-brand-200 mb-4">Your Features</h3>
-            <div className="space-y-2">
-              {(PLAN_FEATURES[plan === 'admin' ? 'pro' : 'free'] || PLAN_FEATURES.free).map((f, i) => (
-                <div key={i} className="flex items-center gap-3 text-sm">
-                  <div className={clsx(
-                    'h-5 w-5 rounded-full flex items-center justify-center shrink-0',
-                    f.included || plan === 'admin'
-                      ? 'bg-emerald-900/50 text-emerald-400'
-                      : 'bg-brand-800 text-brand-600'
-                  )}>
-                    <Check className="h-3 w-3" />
-                  </div>
-                  <span className={clsx(
-                    f.included || plan === 'admin' ? 'text-brand-200' : 'text-brand-600 line-through'
-                  )}>
-                    {f.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Notifications Tab */}
-      {activeTab === 'notifications' && (
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Notification Preferences</h2>
-
-          <div className="space-y-4">
-            <NotifToggle
-              icon={Bell}
-              title="Alert Notifications"
-              desc="In-app notifications when alert conditions are triggered"
-              defaultOn
-            />
-            <NotifToggle
-              icon={Mail}
-              title="Email Digest"
-              desc="Weekly summary of watchlist changes and top movers"
-              defaultOn={false}
-              disabled
-              disabledNote="Coming soon"
-            />
-            <NotifToggle
-              icon={TrendingUp}
-              title="Trend Stage Changes"
-              desc="Notify when a watchlisted topic changes stage"
-              defaultOn
-            />
-          </div>
-
-          <div className="mt-6 p-3 bg-srf rounded-lg border border-ln">
-            <p className="text-xs text-brand-500">
-              Email notifications are not yet available. Currently all notifications are delivered in-app via the Alerts page.
-              Email delivery via AWS SES is planned for the next update.
-            </p>
-          </div>
-        </div>
+function FieldInput({ value, onChange, type = 'text', placeholder = '' }: {
+  value: string; onChange: (v: string) => void; type?: string; placeholder?: string;
+}) {
+  const [show, setShow] = useState(false)
+  const inputType = type === 'password' ? (show ? 'text' : 'password') : type
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        type={inputType}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{
+          width: 240, padding: '8px 12px', borderRadius: 8, fontSize: 13,
+          border: `1px solid ${C.border}`, background: C.bg,
+          color: C.ink, fontFamily: "'Inter', sans-serif",
+          outline: 'none', paddingRight: type === 'password' ? 36 : 12,
+        }}
+      />
+      {type === 'password' && (
+        <button
+          type="button"
+          onClick={() => setShow(s => !s)}
+          style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.stone }}
+        >
+          {show ? <EyeOff size={14} /> : <Eye size={14} />}
+        </button>
       )}
     </div>
   )
 }
 
-/* ── Toggle component ─────────────────────────────────── */
-function NotifToggle({
-  icon: Icon, title, desc, defaultOn = true, disabled = false, disabledNote,
-}: {
-  icon: any; title: string; desc: string; defaultOn?: boolean; disabled?: boolean; disabledNote?: string
-}) {
-  const [on, setOn] = useState(defaultOn)
+export default function SettingsPage() {
+  const logout = useAuthStore(s => s.logout)
+  const [activeTab, setActiveTab] = useState('profile')
+  const [saved, setSaved] = useState(false)
+
+  // Profile state
+  const [name, setName] = useState('Demo User')
+  const [email, setEmail] = useState('demo@neuranest.ai')
+  const [company, setCompany] = useState('Acme Corp')
+
+  // Notifications state
+  const [emailAlerts, setEmailAlerts] = useState(true)
+  const [weeklyReport, setWeeklyReport] = useState(true)
+  const [stageChanges, setStageChanges] = useState(true)
+  const [newOpps, setNewOpps] = useState(false)
+
+  // Security state
+  const [currentPw, setCurrentPw] = useState('')
+  const [newPw, setNewPw] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [twoFactor, setTwoFactor] = useState(false)
+
+  const handleSave = () => {
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
+  }
+
   return (
-    <div className={clsx('flex items-center gap-4 p-3 rounded-lg border transition-colors',
-      disabled ? 'border-ln/50 opacity-60' : 'border-ln hover:border-ln-lt'
-    )}>
-      <div className="p-2 bg-srf rounded-lg text-brand-400 shrink-0">
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-brand-200 flex items-center gap-2">
-          {title}
-          {disabledNote && (
-            <span className="text-[10px] bg-brand-800 text-brand-500 px-1.5 py-0.5 rounded">{disabledNote}</span>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Inter', sans-serif" }}>
+      {/* Header */}
+      <div style={{ marginBottom: 28, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: '-0.03em', color: C.charcoalDeep, fontFamily: "'Sora', sans-serif" }}>
+            Settings
+          </h1>
+          <p style={{ color: C.stone, fontSize: 13, margin: '4px 0 0' }}>Manage your account, preferences, and integrations</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {saved && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: C.sage, fontWeight: 600 }}>
+              <Check size={14} /> Saved
+            </span>
           )}
-        </p>
-        <p className="text-xs text-brand-500 mt-0.5">{desc}</p>
+          <button
+            onClick={handleSave}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '9px 18px', background: C.coral, color: '#fff',
+              border: 'none', borderRadius: 10, fontWeight: 600, fontSize: 13,
+              cursor: 'pointer', boxShadow: '0 3px 10px rgba(225,106,74,0.25)',
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            <Save size={14} /> Save Changes
+          </button>
+        </div>
       </div>
-      <button
-        disabled={disabled}
-        onClick={() => !disabled && setOn(!on)}
-        className={clsx(
-          'relative w-10 h-6 rounded-full transition-colors shrink-0',
-          on && !disabled ? 'bg-brand-500' : 'bg-brand-800',
-          disabled && 'cursor-not-allowed'
-        )}
-      >
-        <div className={clsx(
-          'absolute top-1 h-4 w-4 rounded-full bg-white transition-transform',
-          on && !disabled ? 'translate-x-5' : 'translate-x-1'
-        )} />
-      </button>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 24 }}>
+        {/* Sidebar */}
+        <div>
+          <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+            {TABS.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '12px 16px', border: 'none', cursor: 'pointer', textAlign: 'left',
+                  background: activeTab === tab.id ? C.coralLight : 'transparent',
+                  borderLeft: activeTab === tab.id ? `3px solid ${C.coral}` : '3px solid transparent',
+                  color: activeTab === tab.id ? C.coral : C.slate,
+                  fontWeight: activeTab === tab.id ? 600 : 500,
+                  fontSize: 13, fontFamily: "'Inter', sans-serif",
+                  transition: 'all 0.15s',
+                }}
+              >
+                {tab.icon}
+                {tab.label}
+                {activeTab === tab.id && <ChevronRight size={12} style={{ marginLeft: 'auto' }} />}
+              </button>
+            ))}
+            <div style={{ borderTop: `1px solid ${C.borderLight}`, marginTop: 4 }}>
+              <button
+                onClick={logout}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '12px 16px', border: 'none', cursor: 'pointer', textAlign: 'left',
+                  background: 'transparent', color: '#EF4444',
+                  fontWeight: 500, fontSize: 13, fontFamily: "'Inter', sans-serif",
+                }}
+              >
+                <LogOut size={15} /> Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div>
+          {activeTab === 'profile' && (
+            <>
+              <SettingSection title="Personal Information">
+                <SettingRow label="Full Name" sub="Your display name across the platform">
+                  <FieldInput value={name} onChange={setName} />
+                </SettingRow>
+                <SettingRow label="Email Address" sub="Used for sign-in and notifications">
+                  <FieldInput value={email} onChange={setEmail} type="email" />
+                </SettingRow>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>Company</div>
+                    <div style={{ fontSize: 12, color: C.stone, marginTop: 2 }}>Optional — helps personalise recommendations</div>
+                  </div>
+                  <FieldInput value={company} onChange={setCompany} />
+                </div>
+              </SettingSection>
+
+              <SettingSection title="Plan & Usage">
+                <SettingRow label="Current Plan" sub="Free tier — 5 watchlist slots, 30-day history">
+                  <span style={{ padding: '4px 12px', background: C.sageLight, color: '#1A8754', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+                    Free
+                  </span>
+                </SettingRow>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>Upgrade to Pro</div>
+                    <div style={{ fontSize: 12, color: C.stone, marginTop: 2 }}>Unlimited topics, 12-month history, AI briefs & more</div>
+                  </div>
+                  <button style={{ padding: '9px 18px', background: C.plum, color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
+                    Upgrade ✦
+                  </button>
+                </div>
+              </SettingSection>
+            </>
+          )}
+
+          {activeTab === 'notifications' && (
+            <SettingSection title="Email Notifications">
+              <SettingRow label="Alert Notifications" sub="Receive emails when your alert conditions are triggered">
+                <Toggle value={emailAlerts} onChange={setEmailAlerts} />
+              </SettingRow>
+              <SettingRow label="Weekly Intelligence Report" sub="Get a curated summary of top trends every Monday">
+                <Toggle value={weeklyReport} onChange={setWeeklyReport} />
+              </SettingRow>
+              <SettingRow label="Stage Change Alerts" sub="Notify when a watched topic moves lifecycle stages">
+                <Toggle value={stageChanges} onChange={setStageChanges} />
+              </SettingRow>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>New Opportunity Alerts</div>
+                  <div style={{ fontSize: 12, color: C.stone, marginTop: 2 }}>Be notified of newly detected high-score emerging topics</div>
+                </div>
+                <Toggle value={newOpps} onChange={setNewOpps} />
+              </div>
+            </SettingSection>
+          )}
+
+          {activeTab === 'security' && (
+            <>
+              <SettingSection title="Change Password">
+                <SettingRow label="Current Password" sub="">
+                  <FieldInput value={currentPw} onChange={setCurrentPw} type="password" placeholder="••••••••" />
+                </SettingRow>
+                <SettingRow label="New Password" sub="Min. 8 characters">
+                  <FieldInput value={newPw} onChange={setNewPw} type="password" placeholder="••••••••" />
+                </SettingRow>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>Confirm New Password</div>
+                  </div>
+                  <FieldInput value={confirmPw} onChange={setConfirmPw} type="password" placeholder="••••••••" />
+                </div>
+              </SettingSection>
+              <SettingSection title="Two-Factor Authentication">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>Enable 2FA</div>
+                    <div style={{ fontSize: 12, color: C.stone, marginTop: 2 }}>Add an extra layer of security with an authenticator app</div>
+                  </div>
+                  <Toggle value={twoFactor} onChange={setTwoFactor} />
+                </div>
+              </SettingSection>
+            </>
+          )}
+
+          {activeTab === 'billing' && (
+            <SettingSection title="Billing Information">
+              <div style={{ textAlign: 'center', padding: '32px 0', color: C.stone }}>
+                <CreditCard size={40} style={{ marginBottom: 12, opacity: 0.4 }} />
+                <div style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginBottom: 6 }}>No payment method on file</div>
+                <div style={{ fontSize: 13, marginBottom: 20 }}>You're on the Free plan — no billing required.</div>
+                <button style={{ padding: '10px 24px', background: C.plum, color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                  Upgrade to Pro
+                </button>
+              </div>
+            </SettingSection>
+          )}
+
+          {activeTab === 'appearance' && (
+            <SettingSection title="Theme">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {['Light', 'Dark'].map(theme => (
+                  <div key={theme} style={{
+                    padding: '16px', borderRadius: 10, border: `2px solid ${theme === 'Light' ? C.coral : C.border}`,
+                    background: theme === 'Light' ? C.coralLight : '#0F172A',
+                    cursor: 'pointer', textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: theme === 'Light' ? C.coral : '#fff' }}>
+                      {theme} {theme === 'Light' && '✓'}
+                    </div>
+                    <div style={{ fontSize: 11, color: theme === 'Light' ? C.stone : '#94A3B8', marginTop: 4 }}>
+                      {theme === 'Light' ? 'Current theme' : 'Coming soon'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </SettingSection>
+          )}
+
+          {activeTab === 'data' && (
+            <SettingSection title="Data & Privacy">
+              <SettingRow label="Export My Data" sub="Download a copy of all your watchlist, alert, and activity data">
+                <button style={{ padding: '8px 16px', border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: C.card, color: C.slate, fontFamily: "'Inter', sans-serif" }}>
+                  Export CSV
+                </button>
+              </SettingRow>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#EF4444' }}>Delete Account</div>
+                  <div style={{ fontSize: 12, color: C.stone, marginTop: 2 }}>Permanently remove your account and all data. This cannot be undone.</div>
+                </div>
+                <button style={{ padding: '8px 16px', border: '1px solid #EF4444', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: '#FEF2F2', color: '#EF4444', fontFamily: "'Inter', sans-serif" }}>
+                  Delete Account
+                </button>
+              </div>
+            </SettingSection>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

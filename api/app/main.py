@@ -5,6 +5,7 @@ import structlog
 
 from app.config import get_settings
 from app.routers import auth, topics, watchlist, alerts, exports, admin, dashboard, pipeline, categories, brands, social, whitespace, platforms, science, amazon_ba, entity_resolution, product_intelligence
+from app.routers import notifications
 
 settings = get_settings()
 logger = structlog.get_logger()
@@ -57,6 +58,7 @@ app.include_router(science.router, prefix=settings.API_V1_PREFIX)
 app.include_router(amazon_ba.router, prefix=settings.API_V1_PREFIX)
 app.include_router(entity_resolution.router, prefix=settings.API_V1_PREFIX)
 app.include_router(product_intelligence.router, prefix=settings.API_V1_PREFIX)
+app.include_router(notifications.router, prefix=settings.API_V1_PREFIX)
 # TEMP DISABLE: app.include_router(ml_pipeline.router, prefix=settings.API_V1_PREFIX)
 
 

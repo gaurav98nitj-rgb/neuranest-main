@@ -9,32 +9,32 @@ import {
 } from 'lucide-react'
 import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceLine } from 'recharts'
 
-/* ─── Warm Palette ─── */
+/* ─── NeuraNest Brand Palette ─── */
 const C = {
-  bg: '#F9F7F4', card: '#FFFFFF', border: '#E6E1DA', borderLight: '#F0ECE6',
-  coral: '#E8714A', coralHover: '#D4623D', coralLight: '#FCEEE8', coralUltraLight: '#FFF6F3',
-  sage: '#1A8754', sageLight: '#E8F5EE', amber: '#D4930D', amberLight: '#FFF8E6',
-  rose: '#C0392B', roseLight: '#FFF0F0', plum: '#7C3AED', plumLight: '#F3EEFF',
-  charcoal: '#2D3E50', charcoalDeep: '#1A2A3A',
-  ink: '#2A2520', slate: '#5C5549', stone: '#8B8479', sand: '#B8B2A8',
+  bg: '#F8FAFC', card: '#FFFFFF', border: '#E2E8F0', borderLight: '#F1F5F9',
+  coral: '#E16A4A', coralHover: '#C85A3A', coralLight: '#FEF0EB', coralUltraLight: '#FFF7F5',
+  sage: '#2ED3A5', sageLight: '#EAFAF5', amber: '#FFC857', amberLight: '#FFF8E6',
+  rose: '#EF4444', roseLight: '#FEF2F2', plum: '#6B4EFF', plumLight: '#F0EEFF',
+  charcoal: '#2C5282', charcoalDeep: '#1E3A5F',
+  ink: '#0F172A', slate: '#475569', stone: '#64748B', sand: '#94A3B8',
 }
 
 const STAGE_CONFIG: Record<string, { bg: string; text: string; dot: string; label: string }> = {
-  emerging:  { bg: C.sageLight, text: C.sage, dot: C.sage, label: 'Emerging' },
+  emerging: { bg: C.sageLight, text: C.sage, dot: C.sage, label: 'Emerging' },
   exploding: { bg: C.coralLight, text: C.coral, dot: C.coral, label: 'Exploding' },
-  peaking:   { bg: C.amberLight, text: C.amber, dot: C.amber, label: 'Peaking' },
+  peaking: { bg: C.amberLight, text: C.amber, dot: C.amber, label: 'Peaking' },
   declining: { bg: C.roseLight, text: C.rose, dot: C.rose, label: 'Declining' },
-  unknown:   { bg: C.borderLight, text: C.stone, dot: C.stone, label: 'Unknown' },
+  unknown: { bg: C.borderLight, text: C.stone, dot: C.stone, label: 'Unknown' },
 }
 
 const COMPONENT_META: Record<string, { label: string; color: string; description: string }> = {
-  demand_growth:   { label: 'Demand Growth',   color: C.coral, description: 'Search volume growth rate over recent weeks' },
-  acceleration:    { label: 'Acceleration',     color: C.amber, description: 'Rate of change in growth — is momentum building?' },
-  low_competition: { label: 'Low Competition',  color: C.sage, description: 'Inverse of Amazon competition index' },
-  cross_source:    { label: 'Cross-Source',      color: C.plum, description: 'Confirmation across Google Trends, Reddit, Amazon' },
-  review_gap:      { label: 'Review Gap',       color: C.rose, description: 'Gap between demand and review quality/quantity' },
-  forecast_uplift: { label: 'Forecast Uplift',  color: '#D4930D', description: 'Prophet model predicts rising demand ahead' },
-  geo_expansion:   { label: 'Geo Expansion',    color: C.charcoal, description: 'Interest spreading across multiple regions' },
+  demand_growth: { label: 'Demand Growth', color: C.coral, description: 'Search volume growth rate over recent weeks' },
+  acceleration: { label: 'Acceleration', color: C.amber, description: 'Rate of change in growth — is momentum building?' },
+  low_competition: { label: 'Low Competition', color: C.sage, description: 'Inverse of Amazon competition index' },
+  cross_source: { label: 'Cross-Source', color: C.plum, description: 'Confirmation across Google Trends, Reddit, Amazon' },
+  review_gap: { label: 'Review Gap', color: C.rose, description: 'Gap between demand and review quality/quantity' },
+  forecast_uplift: { label: 'Forecast Uplift', color: '#D4930D', description: 'Prophet model predicts rising demand ahead' },
+  geo_expansion: { label: 'Geo Expansion', color: C.charcoal, description: 'Interest spreading across multiple regions' },
 }
 
 const SIGNAL_META: Record<string, { label: string; emoji: string }> = {
@@ -49,10 +49,10 @@ const SIGNAL_META: Record<string, { label: string; emoji: string }> = {
 
 const ARCHETYPE_CONFIG: Record<string, { icon: any; label: string; color: string }> = {
   'science-led': { icon: Beaker, label: 'Science-Led', color: C.plum },
-  'social-led':  { icon: Radio, label: 'Social-Led', color: C.coral },
+  'social-led': { icon: Radio, label: 'Social-Led', color: C.coral },
   'problem-led': { icon: Target, label: 'Problem-Led', color: C.sage },
-  'demand-led':  { icon: TrendingUp, label: 'Demand-Led', color: C.amber },
-  'unknown':     { icon: Activity, label: 'Multi-Signal', color: C.stone },
+  'demand-led': { icon: TrendingUp, label: 'Demand-Led', color: C.amber },
+  'unknown': { icon: Activity, label: 'Multi-Signal', color: C.stone },
 }
 
 /* ─── Shared Components ─── */
@@ -88,7 +88,7 @@ function SectionCard({ title, subtitle, icon, accentColor, children, noPadding }
       <div style={{ padding: noPadding ? '20px 24px 0' : 0, marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {icon}
-          <h3 style={{ fontSize: 15, fontWeight: 600, margin: 0, color: C.charcoalDeep, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{title}</h3>
+          <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: C.charcoalDeep, fontFamily: "'Sora', sans-serif" }}>{title}</h3>
         </div>
         {subtitle && <p style={{ fontSize: 11, color: C.stone, margin: '4px 0 0' }}>{subtitle}</p>}
       </div>
@@ -106,15 +106,15 @@ function ScoreDonut({ score, label, size = 72, color }: { score: number; label: 
     <div style={{ textAlign: 'center' }}>
       <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={C.borderLight} strokeWidth="5" />
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={c} strokeWidth="5"
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={C.borderLight} strokeWidth="5" />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={c} strokeWidth="5"
             strokeDasharray={`${(score / 100) * circumference} ${circumference}`}
-            strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`}
+            strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`}
             style={{ transition: 'stroke-dasharray 0.6s ease' }} />
         </svg>
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: size > 60 ? 18 : 14, fontWeight: 800, color: C.ink, fontFamily: "'JetBrains Mono', monospace",
+          fontSize: size > 60 ? 18 : 14, fontWeight: 800, color: C.ink, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums',
         }}>
           {score.toFixed(0)}
         </div>
@@ -146,7 +146,7 @@ export default function TopicDetailPage() {
         // Fetch the single topic with explainability via the detail endpoint
         // The detail endpoint already returns explanation_json in latest_scores
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [id])
 
   if (isLoading) {
@@ -211,7 +211,7 @@ export default function TopicDetailPage() {
   return (
     <div style={{
       minHeight: '100vh', background: C.bg, color: C.ink,
-      fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif",
+      fontFamily: "'Inter', -apple-system, sans-serif",
       padding: '24px 36px',
     }}>
       {/* Back nav */}
@@ -236,8 +236,8 @@ export default function TopicDetailPage() {
           {/* Left: Name + badges */}
           <div>
             <h1 style={{
-              fontSize: 28, fontWeight: 400, margin: 0, color: C.charcoalDeep,
-              fontFamily: "'Newsreader', Georgia, serif", letterSpacing: '-0.02em',
+              fontSize: 28, fontWeight: 800, margin: 0, color: C.charcoalDeep,
+              fontFamily: "'Sora', sans-serif", letterSpacing: '-0.03em',
             }}>
               {topic.name}
             </h1>
@@ -298,7 +298,7 @@ export default function TopicDetailPage() {
               <Clock style={{ width: 13, height: 13, color: C.stone }} />
               <span style={{ fontSize: 12, fontWeight: 600, color: C.charcoal }}>Time to Peak</span>
             </div>
-            <span style={{ fontSize: 18, fontWeight: 700, color: C.ink, fontFamily: "'JetBrains Mono', monospace" }}>
+            <span style={{ fontSize: 18, fontWeight: 700, color: C.ink, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums' }}>
               {timeToPeak}
             </span>
           </div>
@@ -310,7 +310,7 @@ export default function TopicDetailPage() {
               <Activity style={{ width: 13, height: 13, color: C.stone }} />
               <span style={{ fontSize: 12, fontWeight: 600, color: C.charcoal }}>Signals</span>
             </div>
-            <span style={{ fontSize: 18, fontWeight: 700, color: C.ink, fontFamily: "'JetBrains Mono', monospace" }}>
+            <span style={{ fontSize: 18, fontWeight: 700, color: C.ink, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums' }}>
               {components.cross_source?.total_sources || '—'}
             </span>
             <span style={{ fontSize: 11, color: C.stone, marginLeft: 4 }}>active sources</span>
@@ -519,16 +519,16 @@ function SignalConvergencePanel({ topicId }: { topicId: string }) {
               <div key={i} style={{ width: 10, height: 10, borderRadius: 2, background: i < activeCount ? C.coral : C.borderLight }} />
             ))}
           </div>
-          <span style={{ fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: "'JetBrains Mono', monospace" }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums' }}>
             {activeCount}/5
           </span>
         </div>
         <div style={{ fontSize: 11, fontWeight: 600, color: activeCount >= 3 ? C.sage : activeCount >= 2 ? C.amber : C.stone }}>
           {activeCount >= 4 ? 'Strong convergence — high conviction signal'
             : activeCount >= 3 ? 'Good convergence — trend validated across sources'
-            : activeCount >= 2 ? 'Partial convergence — monitor for confirmation'
-            : activeCount === 1 ? 'Single source — early stage, needs validation'
-            : 'No signal data available yet'}
+              : activeCount >= 2 ? 'Partial convergence — monitor for confirmation'
+                : activeCount === 1 ? 'Single source — early stage, needs validation'
+                  : 'No signal data available yet'}
         </div>
       </div>
     </>
@@ -621,7 +621,7 @@ function CompetitionTab({ topicId }: { topicId: string }) {
         {metrics.map(m => (
           <div key={m.label} style={{ background: C.card, borderRadius: 12, padding: '16px 18px', border: `1px solid ${C.border}` }}>
             <div style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>{m.label}</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: C.ink, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>{m.value ?? '—'}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: C.ink, marginTop: 4, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums' }}>{m.value ?? '—'}</div>
           </div>
         ))}
       </div>
@@ -777,13 +777,13 @@ function GenNextTab({ topicId }: { topicId: string }) {
           {spec.positioning.target_price && (
             <div>
               <div style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase', fontWeight: 600 }}>Target Price</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: C.ink, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>${spec.positioning.target_price}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: C.ink, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>${spec.positioning.target_price}</div>
             </div>
           )}
           {spec.positioning.target_rating && (
             <div>
               <div style={{ fontSize: 10, color: C.stone, textTransform: 'uppercase', fontWeight: 600 }}>Target Rating</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: C.amber, fontFamily: "'JetBrains Mono', monospace", marginTop: 4 }}>{spec.positioning.target_rating} ★</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: C.amber, fontFamily: "'Inter', sans-serif", fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>{spec.positioning.target_rating} ★</div>
             </div>
           )}
           {spec.positioning.tagline && (

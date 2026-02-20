@@ -3,11 +3,11 @@ import { api } from '../lib/api'
 import { Upload, Search, TrendingUp, Building2, Clock, CheckCircle2, XCircle, Loader2, BarChart3, ArrowUpRight, ArrowDownRight, RefreshCw } from 'lucide-react'
 
 const C = {
-  bg: '#F9F7F4', card: '#FFFFFF', border: '#E6E1DA', borderLight: '#F0ECE6',
-  coral: '#E8714A', coralLight: '#FCEEE8', sage: '#1A8754', sageLight: '#E8F5EE',
-  amber: '#D4930D', amberLight: '#FFF8E6', rose: '#C0392B', roseLight: '#FFF0F0',
-  plum: '#7C3AED', plumLight: '#F3EEFF', charcoal: '#2D3E50', charcoalDeep: '#1A2A3A',
-  ink: '#2A2520', slate: '#5C5549', stone: '#8B8479', sand: '#B8B2A8', cyan: '#0891B2',
+  bg: '#F8FAFC', card: '#FFFFFF', border: '#E2E8F0', borderLight: '#F1F5F9',
+  coral: '#E16A4A', coralLight: '#FEF0EB', sage: '#2ED3A5', sageLight: '#EAFAF5',
+  amber: '#FFC857', amberLight: '#FFF8E6', rose: '#EF4444', roseLight: '#FEF2F2',
+  plum: '#6B4EFF', plumLight: '#F0EEFF', charcoal: '#2C5282', charcoalDeep: '#1E3A5F',
+  ink: '#0F172A', slate: '#475569', stone: '#64748B', sand: '#94A3B8', cyan: '#0891B2',
 }
 
 interface ImportJob { id: string; filename: string; country: string; report_month: string | null; status: string; total_rows: number; rows_imported: number; rows_skipped: number; rows_error: number; error_message: string | null; created_at: string | null; completed_at: string | null }
@@ -39,7 +39,7 @@ export default function AmazonBAPage() {
       const [s, j] = await Promise.all([api.get('/amazon-ba/stats').catch(() => ({ data: null })), api.get('/amazon-ba/jobs').catch(() => ({ data: [] }))])
       setStats(s.data); setJobs(j.data || [])
       if (s.data?.total_rows > 0) { const t = await api.get('/amazon-ba/trending?limit=30').catch(() => ({ data: [] })); setTrending(t.data || []) }
-    } catch {}
+    } catch { }
     setLoading(false)
   }
 
@@ -57,7 +57,7 @@ export default function AmazonBAPage() {
 
   const handleSearch = async () => {
     if (searchQuery.length < 2) return
-    try { const res = await api.get(`/amazon-ba/search?q=${encodeURIComponent(searchQuery)}&limit=100`); setSearchResults(res.data || []) } catch {}
+    try { const res = await api.get(`/amazon-ba/search?q=${encodeURIComponent(searchQuery)}&limit=100`); setSearchResults(res.data || []) } catch { }
   }
 
   const pollJobs = useCallback(async () => { const res = await api.get('/amazon-ba/jobs').catch(() => ({ data: [] })); setJobs(res.data || []) }, [])
@@ -74,12 +74,12 @@ export default function AmazonBAPage() {
   const tdStyle: React.CSSProperties = { padding: '10px 14px', borderBottom: `1px solid ${C.borderLight}`, fontSize: 13 }
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif", color: C.ink }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Inter', -apple-system, sans-serif", color: C.ink }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
           <BarChart3 style={{ width: 22, height: 22, color: C.amber }} />
-          <h1 style={{ fontSize: 28, fontWeight: 400, margin: 0, color: C.charcoalDeep, fontFamily: "'Newsreader', Georgia, serif" }}>Amazon Brand Analytics</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: C.charcoalDeep, fontFamily: "'Sora', sans-serif" }}>Amazon Brand Analytics</h1>
         </div>
         <p style={{ fontSize: 13, color: C.stone, marginLeft: 32 }}>Import, search, and analyze Amazon search term data. Upload monthly BA files to build the ML training dataset.</p>
       </div>
@@ -230,7 +230,7 @@ export default function AmazonBAPage() {
           {trending.length > 0 ? (
             <div style={{ background: C.card, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead><tr>{['Search Term', 'Current Rank', 'Previous Rank', 'Improvement', 'Brand #1', 'Category'].map((h, i) => <th key={i} style={{ ...thStyle, textAlign: [1,2,3].includes(i) ? 'right' : 'left' }}>{h}</th>)}</tr></thead>
+                <thead><tr>{['Search Term', 'Current Rank', 'Previous Rank', 'Improvement', 'Brand #1', 'Category'].map((h, i) => <th key={i} style={{ ...thStyle, textAlign: [1, 2, 3].includes(i) ? 'right' : 'left' }}>{h}</th>)}</tr></thead>
                 <tbody>
                   {trending.map((t, i) => (
                     <tr key={i} style={{ transition: 'background 0.1s' }} onMouseEnter={e => e.currentTarget.style.background = C.bg} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>

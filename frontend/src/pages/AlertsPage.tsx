@@ -4,12 +4,12 @@ import { useAlerts, useCreateAlert, useDeleteAlert, useAlertEvents, useTopics } 
 import { Bell, Plus, Trash2, X, Clock, AlertTriangle, TrendingUp, Zap, DollarSign, Users, RefreshCw, AlertCircle, ChevronDown, ChevronRight, CheckCircle2, Pause, Play } from 'lucide-react'
 
 const C = {
-  bg: '#F9F7F4', card: '#FFFFFF', border: '#E6E1DA', borderLight: '#F0ECE6',
-  coral: '#E8714A', coralLight: '#FCEEE8', coralUltraLight: '#FFF6F3',
-  sage: '#1A8754', sageLight: '#E8F5EE', amber: '#D4930D', amberLight: '#FFF8E6',
-  rose: '#C0392B', roseLight: '#FFF0F0', plum: '#7C3AED', plumLight: '#F3EEFF',
-  charcoal: '#2D3E50', charcoalDeep: '#1A2A3A',
-  ink: '#2A2520', slate: '#5C5549', stone: '#8B8479', sand: '#B8B2A8',
+  bg: '#F8FAFC', card: '#FFFFFF', border: '#E2E8F0', borderLight: '#F1F5F9',
+  coral: '#E16A4A', coralLight: '#FEF0EB', coralUltraLight: '#FFF7F5',
+  sage: '#2ED3A5', sageLight: '#EAFAF5', amber: '#FFC857', amberLight: '#FFF8E6',
+  rose: '#EF4444', roseLight: '#FEF2F2', plum: '#6B4EFF', plumLight: '#F0EEFF',
+  charcoal: '#2C5282', charcoalDeep: '#1E3A5F',
+  ink: '#0F172A', slate: '#475569', stone: '#64748B', sand: '#94A3B8',
 }
 
 const ALERT_TYPES = [
@@ -141,7 +141,7 @@ function AlertCard({ alert: a, isExpanded, onToggleExpand, onDelete }: { alert: 
 function AlertEventHistory({ alertId }: { alertId: string }) {
   const { data: events, isLoading } = useAlertEvents(alertId)
 
-  if (isLoading) return <div style={{ padding: '12px 18px', borderTop: `1px solid ${C.borderLight}` }}><div style={{ display: 'flex', gap: 8 }}>{[1,2,3].map(i => <div key={i} style={{ height: 8, width: 60 + i * 20, background: C.borderLight, borderRadius: 4 }} />)}</div></div>
+  if (isLoading) return <div style={{ padding: '12px 18px', borderTop: `1px solid ${C.borderLight}` }}><div style={{ display: 'flex', gap: 8 }}>{[1, 2, 3].map(i => <div key={i} style={{ height: 8, width: 60 + i * 20, background: C.borderLight, borderRadius: 4 }} />)}</div></div>
 
   if (!events?.length) return (
     <div style={{ padding: '16px 18px', borderTop: `1px solid ${C.borderLight}`, textAlign: 'center' }}>
@@ -178,10 +178,10 @@ export default function AlertsPage() {
   const activeCount = (alerts || []).filter((a: any) => a.is_active).length
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif", color: C.ink, maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px', fontFamily: "'Inter', -apple-system, sans-serif", color: C.ink, maxWidth: 800, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 400, margin: 0, color: C.charcoalDeep, fontFamily: "'Newsreader', Georgia, serif" }}>Alerts</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: C.charcoalDeep, fontFamily: "'Sora', sans-serif" }}>Alerts</h1>
           <p style={{ fontSize: 13, color: C.stone, margin: '6px 0 0' }}>{activeCount} active alert{activeCount !== 1 ? 's' : ''} · Pro plan: 20 max</p>
         </div>
         <button onClick={() => setShowCreate(true)} style={{
